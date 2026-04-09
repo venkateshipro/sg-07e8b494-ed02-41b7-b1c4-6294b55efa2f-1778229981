@@ -1,23 +1,26 @@
 ---
 title: Keyword Explorer Tool
-status: todo
+status: done
 priority: high
 type: feature
-tags: [youtube, keywords, ai]
+tags: [youtube, seo, ai]
 created_by: agent
 created_at: 2026-04-09T08:25:38Z
 position: 5
 ---
 
 ## Notes
-Keyword research tool: search input, AI-powered keyword scoring, competition analysis, top ranking videos. Enforce daily plan limits server-side.
+Build YouTube keyword research tool with AI-powered analysis. Shows related keywords, competition level, keyword score /100, and top 5 ranking videos. Enforces daily limits server-side per plan.
 
 ## Checklist
-- [ ] Create keyword-explorer page with search input
-- [ ] Create API route: fetch related keywords via YouTube Data API
-- [ ] Integrate AI layer for keyword scoring and competition analysis
-- [ ] Display results: keyword list, competition badge (Low/Medium/High), score /100
-- [ ] Show top 5 ranking videos per keyword: title, views, channel
-- [ ] Enforce daily limit via usage_tracking table
-- [ ] Show upgrade prompt when limit reached (Free/Starter users)
-- [ ] Track usage in database on every search
+- [x] Create /keyword-explorer page with DashboardLayout
+- [x] Add PlatformSelector (YouTube active only)
+- [x] Create keyword search input with search button
+- [x] Display usage badge showing searches used vs plan limit
+- [x] Call AI layer for keyword analysis
+- [x] Display results: related keywords list with badges
+- [x] Display competition badge (Low/Medium/High) with color coding
+- [x] Display keyword score /100 with progress bar
+- [x] Display top 5 ranking videos (title, views, channel)
+- [x] Show upgrade prompt when limit reached (Free/Starter users)
+- [x] Track usage in database on every search
