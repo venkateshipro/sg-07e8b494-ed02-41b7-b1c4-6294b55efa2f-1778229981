@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { PlatformBadge } from "@/components/PlatformBadge";
+import type { PlatformStatus } from "@/components/PlatformBadge";
 
 const features = [
   { title: "AI Keyword Explorer", description: "Discover high-volume, low-competition keywords before your competitors do.", icon: Search },
@@ -20,7 +21,7 @@ const features = [
   { title: "Competitor Analysis", description: "Reverse-engineer successful channels to find what works in your industry.", icon: Target }
 ];
 
-const platforms = [
+const platforms: Array<{ name: string; icon: any; status: PlatformStatus; date: string }> = [
   { name: "YouTube", icon: Youtube, status: "live", date: "Available Now" },
   { name: "Instagram", icon: Instagram, status: "coming_soon", date: "Q3 2026" },
   { name: "TikTok", icon: Video, status: "coming_soon", date: "Q3 2026" },
