@@ -12,6 +12,36 @@ import {
   ArrowRight, Zap, Shield, Globe, MessageSquare
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
+import { PlatformBadge } from "@/components/PlatformBadge";
+
+const features = [
+  { title: "AI Keyword Explorer", description: "Discover high-volume, low-competition keywords before your competitors do.", icon: Search },
+  { title: "SEO Optimization", description: "Generate optimized titles, descriptions, and tags tailored to your niche.", icon: Sparkles },
+  { title: "Competitor Analysis", description: "Reverse-engineer successful channels to find what works in your industry.", icon: Target }
+];
+
+const platforms = [
+  { name: "YouTube", icon: Youtube, status: "live", date: "Available Now" },
+  { name: "Instagram", icon: Instagram, status: "coming_soon", date: "Q3 2026" },
+  { name: "TikTok", icon: Video, status: "coming_soon", date: "Q3 2026" },
+  { name: "X (Twitter)", icon: Twitter, status: "coming_soon", date: "Q4 2026" },
+  { name: "LinkedIn", icon: Linkedin, status: "coming_soon", date: "Q4 2026" },
+  { name: "Facebook", icon: Facebook, status: "coming_soon", date: "Q4 2026" }
+];
+
+const plans = [
+  { name: "Free", price: 0, features: ["5 keyword searches/day", "Basic YouTube analytics", "1 connected channel", "Community support"], cta: "Start Free", highlighted: false },
+  { name: "Starter", price: 29, features: ["Unlimited keyword searches", "100 AI SEO optimizations/mo", "5 competitor analyses/mo", "3 connected channels", "Email support"], cta: "Start 14-Day Trial", highlighted: false },
+  { name: "Pro", price: 79, features: ["Unlimited AI SEO optimizations", "Unlimited competitor analysis", "Trend forecasting alerts", "10 connected channels", "Priority support"], cta: "Start 14-Day Trial", highlighted: true },
+  { name: "Enterprise", price: 199, features: ["Unlimited everything", "API access", "Custom AI models", "Unlimited channels", "Dedicated success manager", "Team collaboration"], cta: "Contact Sales", highlighted: false }
+];
+
+const faqs = [
+  { question: "How does the AI SEO optimization work?", answer: "Our AI analyzes top-performing content in your niche and generates optimized titles, descriptions, and tags designed to rank higher in YouTube's algorithm." },
+  { question: "Can I connect multiple YouTube channels?", answer: "Yes, depending on your plan. Starter allows 3 channels, Pro allows 10, and Enterprise offers unlimited channel connections." },
+  { question: "When will other platforms be available?", answer: "We are actively developing support for Instagram and TikTok (expected Q3 2026), followed by X, LinkedIn, and Facebook in Q4 2026." },
+  { question: "Do you offer a free trial?", answer: "Yes, all paid plans come with a 14-day free trial. No credit card is required to start." }
+];
 
 export default function Home() {
   return (
