@@ -44,7 +44,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border">
+    <div className="hidden lg:flex flex-col h-full w-64 bg-sidebar border-r border-sidebar-border">
       {/* Logo */}
       <div className="p-6 border-b border-sidebar-border">
         <Link href="/admin" className="flex items-center gap-2">
