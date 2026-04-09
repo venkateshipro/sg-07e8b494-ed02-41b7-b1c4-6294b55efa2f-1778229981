@@ -134,6 +134,7 @@ export default function CompetitorAnalysisPage() {
 
       const mockCompetitor: CompetitorData = {
         channelName: aiData?.channelName || channelName,
+        channelHandle: aiData?.channelHandle || competitorUrl,
         subscribers: aiData?.subscribers || 523000,
         totalVideos: aiData?.totalVideos || 342,
         avgViews: aiData?.avgViews || 45200,
@@ -145,6 +146,7 @@ export default function CompetitorAnalysisPage() {
           { title: "Expert Analysis Breakdown", views: 78000, publishedDays: 28 },
         ],
         topTags: aiData?.topTags || ["tutorial", "guide", "tips", "how to", "2026", "for beginners", "expert"],
+        uploadFrequency: aiData?.uploadFrequency || "2-3 videos per week",
         insights: aiData?.insights || "Competitor focuses on educational content with strong SEO optimization and consistent upload schedule.",
       };
 
