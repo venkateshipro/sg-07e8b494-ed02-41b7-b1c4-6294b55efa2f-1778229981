@@ -1,6 +1,6 @@
 ---
 title: Public Pages & Landing
-status: todo
+status: in_progress
 priority: medium
 type: feature
 tags: [landing, public, seo]
@@ -10,15 +10,12 @@ position: 13
 ---
 
 ## Notes
-Landing page with hero, features, platform roadmap, pricing, testimonials, FAQ. Pricing page with plan comparison. SEO optimization on all public pages.
+Build marketing landing page, pricing page, and all public-facing content with proper SEO. Hero with CTA, features showcase, platform roadmap, pricing comparison, FAQ, footer.
 
 ## Checklist
-- [ ] Create landing page (/) with hero, CTA buttons
-- [ ] Add features section: Keyword Explorer, SEO Optimizer, Competitor Analysis
-- [ ] Add platform roadmap: YouTube (Live), others (Coming Soon) as timeline
-- [ ] Add pricing section with 4 plan cards and comparison table
-- [ ] Add testimonials section (placeholder cards)
-- [ ] Add FAQ section with common questions
-- [ ] Create /pricing page with detailed plan comparison
-- [ ] Add proper SEO: meta tags, Open Graph, Twitter Card on all public pages
-- [ ] Create footer with links, social icons, copyright
+- [x] Create landing page (/) with hero, features, platform roadmap, pricing preview, FAQ
+- [x] Create pricing page (/pricing) with plan cards and feature comparison table
+- [ ] Add sitemap.xml generation
+- [ ] Add robots.txt
+- [ ] SEO: meta title, description, Open Graph, Twitter Card on all public pages
+- [x] Create footer with links, social icons, copyright
