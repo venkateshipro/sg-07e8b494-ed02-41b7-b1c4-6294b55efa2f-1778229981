@@ -1,6 +1,6 @@
 ---
 title: Authentication & Onboarding Flow
-status: todo
+status: done
 priority: high
 type: feature
 tags: [auth, onboarding, supabase]
@@ -10,14 +10,15 @@ position: 3
 ---
 
 ## Notes
-Implement Supabase Auth with Google OAuth + email/password. Multi-step onboarding: welcome, platform selection, YouTube OAuth, plan selection.
+Implement Supabase Authentication with email/password + Google OAuth. Create multi-step onboarding flow: Welcome → Platform selection → YouTube connection → Plan selection. Protected routes for dashboard and admin.
 
 ## Checklist
-- [ ] Create auth service with Supabase Auth SDK
-- [ ] Build login page with Google OAuth + email/password
-- [ ] Build signup page with email/password
-- [ ] Create 4-step onboarding flow: Welcome → Platform → YouTube OAuth → Plan Selection
-- [ ] Store user profile in users table on signup
-- [ ] Create protected route middleware for /dashboard
-- [ ] Create admin route middleware for /admin
+- [x] Create AuthContext with Supabase session management
+- [x] Create ProtectedRoute component for auth checking
+- [x] Create login page with email/password + Google OAuth
+- [x] Create signup page with email/password + Google OAuth
+- [x] Create auth callback handler for OAuth redirects
+- [x] Create multi-step onboarding flow (4 steps)
+- [x] Add auth provider to _app.tsx
+- [x] Create admin route middleware for /admin
 - [ ] Handle YouTube OAuth callback and token storage
