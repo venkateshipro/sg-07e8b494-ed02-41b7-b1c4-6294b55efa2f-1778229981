@@ -10,7 +10,7 @@ position: 4
 ---
 
 ## Notes
-Build main user dashboard with YouTube stats, recent videos, usage meters. Platform selector shows YouTube as active with other platforms greyed out. Display active announcement banner if admin has published one.
+Build main user dashboard with YouTube stats, recent videos, usage meters. Platform selector shows YouTube as active with other platforms greyed out. Display active announcement banner if admin has published one. Added loading skeletons, empty states, and error boundaries for robust UX.
 
 ## Checklist
 - [x] Create /dashboard page with DashboardLayout wrapper
@@ -23,3 +23,6 @@ Build main user dashboard with YouTube stats, recent videos, usage meters. Platf
 - [x] Create AnnouncementBanner component
 - [x] Fetch and display active announcement banner if admin published one
 - [x] Create PlatformSelector component with "Coming Soon" badges
+- [x] Add loading skeletons for smooth data fetching UX
+- [x] Add empty states with helpful CTAs
+- [x] Add error boundaries for graceful failure handling
