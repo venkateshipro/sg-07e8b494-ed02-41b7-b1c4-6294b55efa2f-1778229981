@@ -83,9 +83,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // 5. Increment usage
     if (usage) {
+      const updateData = column === "keyword_searches" 
+        ? { keyword_searches: used + 1 }
+        : column === "seo_optimizations"
+        ? { seo_optimizations: used + 1 }
+        : { competitor_analysis: used + 1 };
+
       await supabaseAdmin
         .from("usage_tracking")
-        .update({ [column]: used + 1 })
+        .update(updateData)
         .eq("id", usage.id);
     } else {
       const newUsage = {
