@@ -4,6 +4,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PlatformSelector } from "@/components/PlatformSelector";
 import { EmptyState } from "@/components/EmptyState";
 import { CompetitorAnalysisSkeleton } from "@/components/LoadingSkeletons";
+import { ErrorBoundary, ErrorFallback } from "@/components/ErrorBoundary";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -52,9 +53,11 @@ export default function CompetitorAnalysisPage() {
   const [comparison, setComparison] = useState<ComparisonData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dataLoadError, setDataLoadError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
+  const loadInitialData = async () => {
+    try {
+      setDataLoadError(null);
       const allPlatforms = await platformService.getAllPlatforms();
       setPlatforms(allPlatforms);
 
@@ -65,9 +68,14 @@ export default function CompetitorAnalysisPage() {
         const todayUsage = await usageService.getTodayUsage(user.id);
         setUsage(todayUsage?.competitor_analysis || 0);
       }
-    };
+    } catch (err) {
+      console.error("Failed to load initial data:", err);
+      setDataLoadError(err instanceof Error ? err : new Error("Failed to load page data"));
+    }
+  };
 
-    loadData();
+  useEffect(() => {
+    loadInitialData();
   }, [user]);
 
   const canUseFeature = currentPlan && ["pro", "enterprise"].includes(currentPlan.slug);
@@ -154,234 +162,249 @@ export default function CompetitorAnalysisPage() {
         title="Competitor Analysis - FaGrow"
         description="Analyze competitor channels and discover growth strategies"
       />
-      <DashboardLayout>
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Competitor Analysis</h1>
-            <p className="text-muted-foreground">
-              Analyze competitor channels and discover strategies to grow your audience
-            </p>
-          </div>
+      <ErrorBoundary onReset={loadInitialData}>
+        <DashboardLayout>
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Competitor Analysis</h1>
+              <p className="text-muted-foreground">
+                Analyze competitor channels and discover strategies to grow your audience
+              </p>
+            </div>
 
-          <PlatformSelector platforms={platforms} selected={selectedPlatform} onSelect={setSelectedPlatform} />
+            {dataLoadError && (
+              <ErrorFallback
+                error={dataLoadError}
+                title="Failed to Load Competitor Analysis"
+                description="We couldn't load the necessary data for this page."
+                onRetry={loadInitialData}
+              />
+            )}
 
-          {!canUseFeature ? (
-            <Card className="border-primary/50">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Lock className="h-5 w-5 text-primary" />
-                  <CardTitle>Upgrade to Pro or Enterprise</CardTitle>
-                </div>
-                <CardDescription>
-                  Competitor Analysis is available on Pro and Enterprise plans. Upgrade to unlock deep insights into
-                  competitor strategies.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full" onClick={() => (window.location.href = "/billing")}>
-                  View Plans & Upgrade
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>Analyze Competitor</span>
-                    <Badge variant="outline">
-                      {usage} /{" "}
-                      {currentPlan?.competitor_analysis_limit === -1
-                        ? "Unlimited"
-                        : currentPlan?.competitor_analysis_limit || 0}{" "}
-                      analyses today
-                    </Badge>
-                  </CardTitle>
-                  <CardDescription>
-                    Enter a competitor YouTube channel URL or handle to analyze their strategy
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="e.g., @channelhandle or youtube.com/c/channelname"
-                      value={competitorUrl}
-                      onChange={(e) => setCompetitorUrl(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
-                      disabled={loading}
-                    />
-                    <Button onClick={handleAnalyze} disabled={loading || !competitorUrl.trim()}>
-                      {loading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                          Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <Search className="h-4 w-4 mr-2" />
-                          Analyze
-                        </>
-                      )}
-                    </Button>
-                  </div>
+            {!dataLoadError && (
+              <>
+                <PlatformSelector platforms={platforms} selected={selectedPlatform} onSelect={setSelectedPlatform} />
 
-                  {error && (
-                    <Alert variant="destructive" className="mt-4">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Error</AlertTitle>
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-                </CardContent>
-              </Card>
-
-              {loading && (
-                <CompetitorAnalysisSkeleton />
-              )}
-
-              {!competitorData && !loading && !error && (
-                <EmptyState
-                  icon={BarChart3}
-                  title="Analyze Your Competitors"
-                  description="Enter a competitor's YouTube channel URL or handle above to uncover their content strategy, growth patterns, and top-performing content. Learn what works in your niche."
-                  actionLabel="Try Example Channel"
-                  onAction={() => {
-                    setCompetitorUrl("@mkbhd");
-                    handleAnalyze();
-                  }}
-                />
-              )}
-
-              {competitorData && !loading && (
-                <div className="grid grid-cols-1 gap-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Subscribers</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">
-                          {(competitorData.subscribers / 1000000).toFixed(2)}M
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Videos</CardTitle>
-                        <Target className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">{competitorData.totalVideos}</div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Avg Views</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">
-                          {(competitorData.avgViews / 1000).toFixed(1)}K
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Channel Comparison</CardTitle>
-                        <CardDescription>Your channel vs {competitorData.channelName}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Metric</TableHead>
-                              <TableHead>Yours</TableHead>
-                              <TableHead>Theirs</TableHead>
-                              <TableHead>Gap</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {comparison.map((row, idx) => (
-                              <TableRow key={idx}>
-                                <TableCell className="font-medium">{row.metric}</TableCell>
-                                <TableCell>{row.yourChannel}</TableCell>
-                                <TableCell>{row.competitor}</TableCell>
-                                <TableCell>
-                                  <span className="text-primary font-semibold">{row.difference}</span>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Recent Videos</CardTitle>
-                        <CardDescription>Last 5 uploads from competitor</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          {competitorData.recentVideos.map((video, idx) => (
-                            <div key={idx} className="pb-3 border-b border-border last:border-0">
-                              <p className="font-medium text-sm line-clamp-2">{video.title}</p>
-                              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                                <span>{(video.views / 1000).toFixed(1)}K views</span>
-                                <span>•</span>
-                                <span>{new Date(video.publishedDate).toLocaleDateString()}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <Card>
+                {!canUseFeature ? (
+                  <Card className="border-primary/50">
                     <CardHeader>
-                      <CardTitle>Content Strategy Insights</CardTitle>
-                      <CardDescription>What you can learn from this competitor</CardDescription>
+                      <div className="flex items-center gap-2">
+                        <Lock className="h-5 w-5 text-primary" />
+                        <CardTitle>Upgrade to Pro or Enterprise</CardTitle>
+                      </div>
+                      <CardDescription>
+                        Competitor Analysis is available on Pro and Enterprise plans. Upgrade to unlock deep insights into
+                        competitor strategies.
+                      </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <h4 className="text-sm font-semibold mb-2">Upload Frequency</h4>
-                        <p className="text-sm text-muted-foreground">
-                          They post <span className="text-foreground font-medium">{competitorData.uploadFrequency}</span>
-                          . Consistent uploads help maintain audience engagement.
-                        </p>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold mb-2">Top Tags Used</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {competitorData.topTags.map((tag, idx) => (
-                            <Badge key={idx} variant="outline">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold mb-2">Key Takeaways</h4>
-                        <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                          <li>Focus on tutorial and how-to content for higher engagement</li>
-                          <li>Increase upload frequency to match top performers in your niche</li>
-                          <li>Use trending keywords and tags in video metadata</li>
-                          <li>Create more unboxing and review content (high view counts)</li>
-                        </ul>
-                      </div>
+                    <CardContent>
+                      <Button className="w-full" onClick={() => (window.location.href = "/billing")}>
+                        View Plans & Upgrade
+                      </Button>
                     </CardContent>
                   </Card>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </DashboardLayout>
+                ) : (
+                  <>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                          <span>Analyze Competitor</span>
+                          <Badge variant="outline">
+                            {usage} /{" "}
+                            {currentPlan?.competitor_analysis_limit === -1
+                              ? "Unlimited"
+                              : currentPlan?.competitor_analysis_limit || 0}{" "}
+                            analyses today
+                          </Badge>
+                        </CardTitle>
+                        <CardDescription>
+                          Enter a competitor YouTube channel URL or handle to analyze their strategy
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="e.g., @channelhandle or youtube.com/c/channelname"
+                            value={competitorUrl}
+                            onChange={(e) => setCompetitorUrl(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
+                            disabled={loading}
+                          />
+                          <Button onClick={handleAnalyze} disabled={loading || !competitorUrl.trim()}>
+                            {loading ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                Analyzing...
+                              </>
+                            ) : (
+                              <>
+                                <Search className="h-4 w-4 mr-2" />
+                                Analyze
+                              </>
+                            )}
+                          </Button>
+                        </div>
+
+                        {error && (
+                          <Alert variant="destructive" className="mt-4">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>{error}</AlertDescription>
+                          </Alert>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {loading && (
+                      <CompetitorAnalysisSkeleton />
+                    )}
+
+                    {!competitorData && !loading && !error && (
+                      <EmptyState
+                        icon={BarChart3}
+                        title="Analyze Your Competitors"
+                        description="Enter a competitor's YouTube channel URL or handle above to uncover their content strategy, growth patterns, and top-performing content. Learn what works in your niche."
+                        actionLabel="Try Example Channel"
+                        onAction={() => {
+                          setCompetitorUrl("@mkbhd");
+                          handleAnalyze();
+                        }}
+                      />
+                    )}
+
+                    {competitorData && !loading && (
+                      <div className="grid grid-cols-1 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                              <CardTitle className="text-sm font-medium">Subscribers</CardTitle>
+                              <Users className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                              <div className="text-2xl font-bold">
+                                {(competitorData.subscribers / 1000000).toFixed(2)}M
+                              </div>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                              <CardTitle className="text-sm font-medium">Total Videos</CardTitle>
+                              <Target className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                              <div className="text-2xl font-bold">{competitorData.totalVideos}</div>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                              <CardTitle className="text-sm font-medium">Avg Views</CardTitle>
+                              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                              <div className="text-2xl font-bold">
+                                {(competitorData.avgViews / 1000).toFixed(1)}K
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <Card>
+                            <CardHeader>
+                              <CardTitle>Channel Comparison</CardTitle>
+                              <CardDescription>Your channel vs {competitorData.channelName}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Metric</TableHead>
+                                    <TableHead>Yours</TableHead>
+                                    <TableHead>Theirs</TableHead>
+                                    <TableHead>Gap</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {comparison.map((row, idx) => (
+                                    <TableRow key={idx}>
+                                      <TableCell className="font-medium">{row.metric}</TableCell>
+                                      <TableCell>{row.yourChannel}</TableCell>
+                                      <TableCell>{row.competitor}</TableCell>
+                                      <TableCell>
+                                        <span className="text-primary font-semibold">{row.difference}</span>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </CardContent>
+                          </Card>
+
+                          <Card>
+                            <CardHeader>
+                              <CardTitle>Recent Videos</CardTitle>
+                              <CardDescription>Last 5 uploads from competitor</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-3">
+                                {competitorData.recentVideos.map((video, idx) => (
+                                  <div key={idx} className="pb-3 border-b border-border last:border-0">
+                                    <p className="font-medium text-sm line-clamp-2">{video.title}</p>
+                                    <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                      <span>{(video.views / 1000).toFixed(1)}K views</span>
+                                      <span>•</span>
+                                      <span>{new Date(video.publishedDate).toLocaleDateString()}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>Content Strategy Insights</CardTitle>
+                            <CardDescription>What you can learn from this competitor</CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div>
+                              <h4 className="text-sm font-semibold mb-2">Upload Frequency</h4>
+                              <p className="text-sm text-muted-foreground">
+                                They post <span className="text-foreground font-medium">{competitorData.uploadFrequency}</span>
+                                . Consistent uploads help maintain audience engagement.
+                              </p>
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-semibold mb-2">Top Tags Used</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {competitorData.topTags.map((tag, idx) => (
+                                  <Badge key={idx} variant="outline">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-semibold mb-2">Key Takeaways</h4>
+                              <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                                <li>Focus on tutorial and how-to content for higher engagement</li>
+                                <li>Increase upload frequency to match top performers in your niche</li>
+                                <li>Use trending keywords and tags in video metadata</li>
+                                <li>Create more unboxing and review content (high view counts)</li>
+                              </ul>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </DashboardLayout>
+      </ErrorBoundary>
     </ProtectedRoute>
   );
 }
