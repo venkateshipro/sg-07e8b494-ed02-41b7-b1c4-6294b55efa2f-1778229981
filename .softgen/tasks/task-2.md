@@ -1,6 +1,6 @@
 ---
 title: Design System & Core Layout
-status: in_progress
+status: done
 priority: urgent
 type: feature
 tags: [frontend, design, components]
@@ -15,10 +15,10 @@ Implement FaGrow's dark-mode-first design system with deep purple primary, brigh
 ## Checklist
 - [x] Update globals.css with FaGrow color tokens (purple/green theme)
 - [x] Configure Inter font in tailwind.config.ts
-- [ ] Create DashboardLayout component with collapsible sidebar
-- [ ] Create AdminLayout component with admin-specific sidebar
-- [ ] Create Sidebar component with platform selector, navigation items, user profile footer
-- [ ] Create PlatformBadge component for "Coming Soon" pills
-- [ ] Create StatsCard component for metrics display
-- [ ] Create UsageMeter component for plan limit tracking
-- [ ] Create PlanCard component for subscription tiers
+- [x] Create DashboardLayout component with collapsible sidebar
+- [x] Create AdminLayout component with admin-specific sidebar
+- [x] Create Sidebar component with platform selector, navigation items, user profile footer
+- [x] Create PlatformBadge component for "Coming Soon" pills
+- [x] Create StatsCard component for metrics display
+- [x] Create UsageMeter component for plan limit tracking
+- [x] Create PlanCard component for subscription tiers
