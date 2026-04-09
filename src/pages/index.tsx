@@ -1,13 +1,21 @@
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Search, Sparkles, Target, Youtube, Instagram, MessageSquare, Linkedin, Facebook, Check } from "lucide-react";
+import { ThemeSwitch } from "@/components/ThemeSwitch";
+import { 
+  Sparkles, Search, Target, TrendingUp, Users, Eye, Video,
+  Youtube, Instagram, Facebook, Linkedin, Twitter, CheckCircle2,
+  ArrowRight, Zap, Shield, Globe, Menu, X
+} from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { PlatformBadge } from "@/components/PlatformBadge";
 
 export default function LandingPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const features = [
     {
       icon: Search,
@@ -120,41 +128,90 @@ export default function LandingPage() {
       />
 
       <div className="min-h-screen bg-background">
-        {/* Header */}
-        <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">
-          <div className="container py-4">
-            <div className="flex items-center justify-between">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                  <Sparkles className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <span className="text-xl font-bold">FaGrow</span>
-              </Link>
-              <nav className="hidden md:flex items-center gap-6">
-                <Link href="#features" className="text-sm text-muted-foreground hover:text-foreground transition">
+        {/* Navigation */}
+        <nav className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex h-16 items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-8 w-8 text-primary" />
+                <span className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  FaGrow
+                </span>
+              </div>
+
+              {/* Desktop Navigation */}
+              <div className="hidden md:flex items-center gap-6">
+                <Link href="#features" className="text-sm font-medium hover:text-primary transition-colors">
                   Features
                 </Link>
-                <Link href="#platforms" className="text-sm text-muted-foreground hover:text-foreground transition">
+                <Link href="#platforms" className="text-sm font-medium hover:text-primary transition-colors">
                   Platforms
                 </Link>
-                <Link href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition">
+                <Link href="#pricing" className="text-sm font-medium hover:text-primary transition-colors">
                   Pricing
                 </Link>
-                <Link href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition">
+                <Link href="#faq" className="text-sm font-medium hover:text-primary transition-colors">
                   FAQ
                 </Link>
-              </nav>
-              <div className="flex items-center gap-3">
+                <ThemeSwitch />
                 <Link href="/login">
-                  <Button variant="ghost">Sign In</Button>
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
                 </Link>
                 <Link href="/signup">
-                  <Button>Get Started Free</Button>
+                  <Button size="sm">
+                    Get Started Free
+                  </Button>
                 </Link>
+              </div>
+
+              {/* Mobile Menu Button */}
+              <div className="md:hidden flex items-center gap-2">
+                <ThemeSwitch />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                >
+                  {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </Button>
               </div>
             </div>
           </div>
-        </header>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden border-t bg-card">
+              <div className="container px-4 py-4 space-y-3">
+                <Link href="#features" className="block py-2 text-sm font-medium hover:text-primary">
+                  Features
+                </Link>
+                <Link href="#platforms" className="block py-2 text-sm font-medium hover:text-primary">
+                  Platforms
+                </Link>
+                <Link href="#pricing" className="block py-2 text-sm font-medium hover:text-primary">
+                  Pricing
+                </Link>
+                <Link href="#faq" className="block py-2 text-sm font-medium hover:text-primary">
+                  FAQ
+                </Link>
+                <div className="pt-3 space-y-2">
+                  <Link href="/login" className="block">
+                    <Button variant="ghost" size="sm" className="w-full">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link href="/signup" className="block">
+                    <Button size="sm" className="w-full">
+                      Get Started Free
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+        </nav>
 
         {/* Hero */}
         <section className="py-20 md:py-32">
@@ -275,7 +332,7 @@ export default function LandingPage() {
                     <ul className="space-y-2">
                       {plan.features.map((feature, featureIdx) => (
                         <li key={featureIdx} className="flex items-start gap-2">
-                          <Check className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
+                          <CheckCircle2 className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
                           <span className="text-sm">{feature}</span>
                         </li>
                       ))}

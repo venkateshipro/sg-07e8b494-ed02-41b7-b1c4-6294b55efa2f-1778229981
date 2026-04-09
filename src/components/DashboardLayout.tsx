@@ -1,51 +1,32 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
 import { DashboardSidebar } from "./DashboardSidebar";
-import { userService } from "@/services/userService";
-import { platformService } from "@/services/platformService";
-import type { User } from "@/types/database";
-import type { PlatformConfig } from "@/types/database";
+import { ThemeSwitch } from "./ThemeSwitch";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [platforms, setPlatforms] = useState<PlatformConfig[]>([]);
-
-  useEffect(() => {
-    const loadUserData = async () => {
-      const currentUser = await userService.getCurrentUser();
-      setUser(currentUser);
-
-      const allPlatforms = await platformService.getAllPlatforms();
-      setPlatforms(allPlatforms);
-    };
-
-    loadUserData();
-  }, []);
-
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <aside className="w-64 flex-shrink-0">
-        <DashboardSidebar 
-          user={user ? {
-            name: user.name,
-            email: user.email,
-            avatar_url: user.avatar_url || undefined,
-            plan: user.plan,
-          } : undefined}
-          platforms={platforms.map(p => ({
-            ...p,
-            status: p.status as "live" | "coming_soon"
-          }))}
-        />
-      </aside>
-      <main className="flex-1 overflow-y-auto">
-        <div className="container py-6">
+    <div className="flex min-h-screen w-full bg-background">
+      <DashboardSidebar />
+      
+      <div className="flex-1 flex flex-col">
+        <header className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+          <div className="container flex h-16 items-center justify-between px-8">
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-semibold">FaGrow Dashboard</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeSwitch />
+            </div>
+          </div>
+        </header>
+        
+        <main className="flex-1 container px-8 py-6">
           {children}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <ThemeProvider defaultTheme="dark">
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <AuthProvider>
         <Component {...pageProps} />
         <Toaster />
