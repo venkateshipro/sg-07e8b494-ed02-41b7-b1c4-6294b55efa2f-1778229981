@@ -5,216 +5,72 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
+import { MobileNav } from "@/components/MobileNav";
 import { 
   Sparkles, Search, Target, TrendingUp, Users, Eye, Video,
   Youtube, Instagram, Facebook, Linkedin, Twitter, CheckCircle2,
-  ArrowRight, Zap, Shield, Globe, Menu, X, MessageSquare
+  ArrowRight, Zap, Shield, Globe, MessageSquare
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
-import { PlatformBadge } from "@/components/PlatformBadge";
 
-export default function LandingPage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const features = [
-    {
-      icon: Search,
-      title: "Keyword Explorer",
-      description: "Discover high-performing keywords with AI-powered competition analysis and ranking insights.",
-    },
-    {
-      icon: Sparkles,
-      title: "SEO Optimizer",
-      description: "Transform your video titles, descriptions, and tags with intelligent AI suggestions for maximum reach.",
-    },
-    {
-      icon: Target,
-      title: "Competitor Analysis",
-      description: "Analyze competitor strategies and uncover growth opportunities in your niche.",
-    },
-  ];
-
-  const platforms = [
-    { name: "YouTube", icon: Youtube, status: "live" as const, date: "Live Now" },
-    { name: "Instagram", icon: Instagram, status: "coming_soon" as const, date: "Q2 2026" },
-    { name: "TikTok", icon: MessageSquare, status: "coming_soon" as const, date: "Q3 2026" },
-    { name: "X (Twitter)", icon: MessageSquare, status: "coming_soon" as const, date: "Q3 2026" },
-    { name: "LinkedIn", icon: Linkedin, status: "coming_soon" as const, date: "Q4 2026" },
-    { name: "Facebook", icon: Facebook, status: "coming_soon" as const, date: "Q4 2026" },
-  ];
-
-  const plans = [
-    {
-      name: "Free",
-      price: 0,
-      features: ["5 keyword searches/day", "YouTube only", "1 team member", "Standard support"],
-      cta: "Get Started",
-      highlighted: false,
-    },
-    {
-      name: "Starter",
-      price: 9,
-      features: ["20 keyword searches/day", "YouTube only", "1 team member", "Standard support"],
-      cta: "Start Free Trial",
-      highlighted: false,
-    },
-    {
-      name: "Pro",
-      price: 29,
-      features: [
-        "Unlimited keyword searches",
-        "SEO Optimizer",
-        "Competitor Analysis",
-        "YouTube only",
-        "3 team members",
-        "Standard support",
-      ],
-      cta: "Start Free Trial",
-      highlighted: true,
-    },
-    {
-      name: "Enterprise",
-      price: 99,
-      features: [
-        "Everything in Pro",
-        "All platforms",
-        "10 team members",
-        "Priority support",
-        "Custom integrations",
-      ],
-      cta: "Contact Sales",
-      highlighted: false,
-    },
-  ];
-
-  const faqs = [
-    {
-      question: "How does the AI-powered optimization work?",
-      answer:
-        "Our AI analyzes millions of successful videos across platforms to suggest optimized titles, descriptions, and tags that improve discoverability and engagement.",
-    },
-    {
-      question: "Can I switch plans at any time?",
-      answer:
-        "Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately, and billing is prorated.",
-    },
-    {
-      question: "What platforms do you support?",
-      answer:
-        "We currently support YouTube with full features. Instagram, TikTok, X, LinkedIn, and Facebook are coming soon throughout 2026.",
-    },
-    {
-      question: "Do you offer refunds?",
-      answer:
-        "We offer a 14-day money-back guarantee on all paid plans. If you're not satisfied, contact us for a full refund.",
-    },
-    {
-      question: "How are daily limits calculated?",
-      answer:
-        "Daily limits reset every 24 hours at midnight UTC. Unused searches don't roll over to the next day.",
-    },
-    {
-      question: "Is there a free trial?",
-      answer:
-        "Yes! All paid plans include a 14-day free trial. No credit card required to start exploring FaGrow.",
-    },
-  ];
-
+export default function Home() {
   return (
     <>
-      <SEO
-        title="FaGrow - AI-Powered Social Media Growth & SEO"
-        description="Grow your YouTube channel with AI-powered keyword research, SEO optimization, and competitor analysis. Multi-platform support coming soon."
+      <SEO 
+        title="FaGrow - Multi-Platform Social Media SEO & Growth SaaS"
+        description="Grow your YouTube channel with AI-powered keyword research, SEO optimization, and competitor analysis. More platforms coming soon."
       />
-
+      
       <div className="min-h-screen bg-background">
         {/* Navigation */}
         <nav className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 items-center justify-between">
-              <div className="flex items-center gap-2">
+              <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
                 <Sparkles className="h-8 w-8 text-primary" />
                 <span className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                   FaGrow
                 </span>
-              </div>
+              </Link>
 
               {/* Desktop Navigation */}
               <div className="hidden md:flex items-center gap-6">
-                <Link href="#features" className="text-sm font-medium hover:text-primary transition-colors">
+                <Link href="#features" className="text-sm font-medium hover:text-primary transition-colors py-2 px-1">
                   Features
                 </Link>
-                <Link href="#platforms" className="text-sm font-medium hover:text-primary transition-colors">
+                <Link href="#platforms" className="text-sm font-medium hover:text-primary transition-colors py-2 px-1">
                   Platforms
                 </Link>
-                <Link href="#pricing" className="text-sm font-medium hover:text-primary transition-colors">
+                <Link href="#pricing" className="text-sm font-medium hover:text-primary transition-colors py-2 px-1">
                   Pricing
                 </Link>
-                <Link href="#faq" className="text-sm font-medium hover:text-primary transition-colors">
+                <Link href="#faq" className="text-sm font-medium hover:text-primary transition-colors py-2 px-1">
                   FAQ
                 </Link>
                 <ThemeSwitch />
                 <Link href="/login">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="h-10">
                     Sign In
                   </Button>
                 </Link>
                 <Link href="/signup">
-                  <Button size="sm">
+                  <Button size="sm" className="h-10 bg-gradient-to-r from-primary to-accent hover:opacity-90">
                     Get Started Free
                   </Button>
                 </Link>
               </div>
 
-              {/* Mobile Menu Button */}
+              {/* Mobile Navigation */}
               <div className="md:hidden flex items-center gap-2">
                 <ThemeSwitch />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                >
-                  {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                </Button>
+                <MobileNav />
               </div>
             </div>
           </div>
-
-          {/* Mobile Menu */}
-          {mobileMenuOpen && (
-            <div className="md:hidden border-t bg-card">
-              <div className="container px-4 py-4 space-y-3">
-                <Link href="#features" className="block py-2 text-sm font-medium hover:text-primary">
-                  Features
-                </Link>
-                <Link href="#platforms" className="block py-2 text-sm font-medium hover:text-primary">
-                  Platforms
-                </Link>
-                <Link href="#pricing" className="block py-2 text-sm font-medium hover:text-primary">
-                  Pricing
-                </Link>
-                <Link href="#faq" className="block py-2 text-sm font-medium hover:text-primary">
-                  FAQ
-                </Link>
-                <div className="pt-3 space-y-2">
-                  <Link href="/login" className="block">
-                    <Button variant="ghost" size="sm" className="w-full">
-                      Sign In
-                    </Button>
-                  </Link>
-                  <Link href="/signup" className="block">
-                    <Button size="sm" className="w-full">
-                      Get Started Free
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
         </nav>
 
-        {/* Hero */}
-        <section className="py-20 md:py-32">
+        {/* Hero Section */}
+        <section className="relative overflow-hidden">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center space-y-6">
               <Badge variant="outline" className="mb-4">
