@@ -1,6 +1,6 @@
 ---
 title: Database Schema & RLS Setup
-status: in_progress
+status: done
 priority: urgent
 type: feature
 tags: [backend, database, supabase]
@@ -13,15 +13,15 @@ position: 1
 Set up complete Supabase PostgreSQL schema for FaGrow with all tables and Row Level Security policies. Admin users bypass all RLS, regular users access only their own data.
 
 ## Checklist
-- [ ] Create users table with role, plan, expiry tracking
-- [ ] Create connected_platforms table for OAuth tokens
-- [ ] Create usage_tracking table for daily limits
-- [ ] Create subscriptions table for Razorpay integration
-- [ ] Create plans table with feature limits
-- [ ] Create platforms_config table for platform management
-- [ ] Create announcements table for admin broadcasts
-- [ ] Create ai_config table for provider configuration
-- [ ] Create team_members table for Enterprise collaboration
-- [ ] Apply RLS policies: users own their data, admins bypass all
-- [ ] Create indexes for performance
-- [ ] Seed initial data: plans, platforms_config, default ai_config
+- [x] Create users table with role, plan, expiry tracking
+- [x] Create connected_platforms table for OAuth tokens
+- [x] Create usage_tracking table for daily limits
+- [x] Create subscriptions table for Razorpay integration
+- [x] Create plans table with feature limits
+- [x] Create platforms_config table for platform management
+- [x] Create announcements table for admin broadcasts
+- [x] Create ai_config table for provider configuration
+- [x] Create team_members table for Enterprise collaboration
+- [x] Apply RLS policies: users own their data, admins bypass all
+- [x] Create indexes for performance
+- [x] Seed initial data: plans, platforms_config, default ai_config
