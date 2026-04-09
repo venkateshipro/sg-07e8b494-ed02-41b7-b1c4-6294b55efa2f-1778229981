@@ -8,7 +8,7 @@ import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { 
   Sparkles, Search, Target, TrendingUp, Users, Eye, Video,
   Youtube, Instagram, Facebook, Linkedin, Twitter, CheckCircle2,
-  ArrowRight, Zap, Shield, Globe, Menu, X
+  ArrowRight, Zap, Shield, Globe, Menu, X, MessageSquare
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { PlatformBadge } from "@/components/PlatformBadge";
