@@ -94,8 +94,8 @@ export default function DashboardPage() {
             <h1 className="text-3xl font-bold">Dashboard</h1>
             <PlatformSelector
               platforms={platforms}
-              selectedPlatform={selectedPlatform}
-              onSelectPlatform={setSelectedPlatform}
+              selected={selectedPlatform}
+              onSelect={setSelectedPlatform}
             />
           </div>
 
