@@ -13,7 +13,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { platformService } from "@/services/platformService";
 import { planService } from "@/services/planService";
 import { usageService } from "@/services/usageService";
-import { callAI } from "@/lib/ai";
 import { SEO } from "@/components/SEO";
 import type { PlatformConfig, Plan } from "@/types/database";
 
@@ -64,43 +63,44 @@ export default function KeywordExplorerPage() {
     setError(null);
 
     try {
-      const canUse = await usageService.canUseFeature(
-        user.id,
-        "keyword_searches",
-        currentPlan.keyword_searches_limit
-      );
-
-      if (!canUse) {
-        setError("Daily keyword search limit reached. Upgrade your plan for more searches.");
-        setLoading(false);
-        return;
-      }
-
-      const aiResponse = await callAI({
-        type: "keyword_analysis",
-        input: `Analyze this YouTube keyword: "${keyword}". Return related keywords, competition level (low/medium/high), keyword score (0-100), and top 5 ranking video examples.`,
+      const response = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "keyword_analysis",
+          input: `Analyze this YouTube keyword: "${keyword}". Return related keywords, competition level (low/medium/high), keyword score (0-100), and top 5 ranking video examples.`,
+          userId: user.id
+        })
       });
 
-      if (!aiResponse.success) {
-        setError(aiResponse.error || "Failed to analyze keyword");
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Daily keyword search limit reached. Upgrade your plan for more searches.");
         setLoading(false);
         return;
       }
 
-      await usageService.trackUsage(user.id, "keyword_searches");
+      if (!data.success) {
+        setError(data.error || "Failed to analyze keyword");
+        setLoading(false);
+        return;
+      }
+
+      const aiData = data.data;
 
       const mockResult: KeywordResult = {
         keyword: keyword,
-        score: 78,
-        competition: "medium",
-        relatedKeywords: [
+        score: aiData?.score || 78,
+        competition: aiData?.competition || "medium",
+        relatedKeywords: aiData?.relatedKeywords || [
           `${keyword} tutorial`,
           `${keyword} tips`,
           `best ${keyword}`,
           `${keyword} for beginners`,
           `${keyword} guide`,
         ],
-        topVideos: [
+        topVideos: aiData?.topVideos || [
           { title: `Complete ${keyword} Guide 2026`, views: 1245000, channel: "Tech Channel" },
           { title: `${keyword} - Everything You Need to Know`, views: 892000, channel: "Learn Hub" },
           { title: `Master ${keyword} in 10 Minutes`, views: 567000, channel: "Quick Tutorials" },

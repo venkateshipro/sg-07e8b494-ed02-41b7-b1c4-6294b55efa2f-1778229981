@@ -10,7 +10,7 @@ const SYSTEM_PROMPTS = {
 export const anthropicAdapter = {
   async call(request: AIRequest, model: string, apiKey: string): Promise<AIResponse> {
     try {
-      const anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+      const anthropic = new Anthropic({ apiKey });
 
       const message = await anthropic.messages.create({
         model: model || "claude-sonnet-4-20250514",
@@ -44,7 +44,7 @@ export const anthropicAdapter = {
 
   async testConnection(apiKey: string): Promise<boolean> {
     try {
-      const anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+      const anthropic = new Anthropic({ apiKey });
       await anthropic.messages.create({
         model: "claude-sonnet-4-20250514",
         max_tokens: 10,

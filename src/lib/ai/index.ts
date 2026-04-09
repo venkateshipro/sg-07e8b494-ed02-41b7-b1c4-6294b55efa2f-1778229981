@@ -1,6 +1,8 @@
-import { supabase } from "@/integrations/supabase/client";
 import { openaiAdapter } from "./openai";
 import { anthropicAdapter } from "./anthropic";
+import { decryptAPIKey } from "../encryption";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 export interface AIRequest {
   type: "keyword_analysis" | "seo_optimization" | "competitor_insights";
@@ -10,14 +12,22 @@ export interface AIRequest {
 
 export interface AIResponse {
   success: boolean;
-  data?: unknown;
+  data?: any;
   error?: string;
   provider?: "openai" | "anthropic";
   model?: string;
 }
 
+const getAdminClient = () => {
+  return createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+  );
+};
+
 async function getAIConfig() {
-  const { data, error } = await supabase
+  const adminClient = getAdminClient();
+  const { data, error } = await adminClient
     .from("ai_config")
     .select("*")
     .single();
@@ -33,16 +43,18 @@ async function getAIConfig() {
 export async function callAI(request: AIRequest): Promise<AIResponse> {
   try {
     const config = await getAIConfig();
-    const primaryProvider = config.active_provider;
+    const primaryProvider = config.active_provider as "openai" | "anthropic";
     const primaryModel = config.active_model;
 
     let response: AIResponse;
 
     try {
       if (primaryProvider === "openai") {
-        response = await openaiAdapter.call(request, primaryModel, config.openai_key_encrypted);
+        const apiKey = decryptAPIKey(config.openai_key_encrypted || "");
+        response = await openaiAdapter.call(request, primaryModel, apiKey);
       } else {
-        response = await anthropicAdapter.call(request, primaryModel, config.anthropic_key_encrypted);
+        const apiKey = decryptAPIKey(config.anthropic_key_encrypted || "");
+        response = await anthropicAdapter.call(request, primaryModel, apiKey);
       }
 
       if (response.success) {
@@ -52,20 +64,23 @@ export async function callAI(request: AIRequest): Promise<AIResponse> {
       console.error(`Primary provider (${primaryProvider}) failed:`, primaryError);
 
       if (config.fallback_enabled && config.fallback_provider) {
-        console.log(`Attempting fallback to ${config.fallback_provider}...`);
+        const fallbackProvider = config.fallback_provider as "openai" | "anthropic";
+        console.log(`Attempting fallback to ${fallbackProvider}...`);
         
         try {
-          if (config.fallback_provider === "openai") {
-            response = await openaiAdapter.call(request, "gpt-4o-mini", config.openai_key_encrypted);
+          if (fallbackProvider === "openai") {
+            const apiKey = decryptAPIKey(config.openai_key_encrypted || "");
+            response = await openaiAdapter.call(request, "gpt-4o-mini", apiKey);
           } else {
-            response = await anthropicAdapter.call(request, "claude-sonnet-4-20250514", config.anthropic_key_encrypted);
+            const apiKey = decryptAPIKey(config.anthropic_key_encrypted || "");
+            response = await anthropicAdapter.call(request, "claude-sonnet-4-20250514", apiKey);
           }
 
           if (response.success) {
-            return { ...response, provider: config.fallback_provider };
+            return { ...response, provider: fallbackProvider };
           }
         } catch (fallbackError) {
-          console.error(`Fallback provider (${config.fallback_provider}) also failed:`, fallbackError);
+          console.error(`Fallback provider (${fallbackProvider}) also failed:`, fallbackError);
         }
       }
 

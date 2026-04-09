@@ -10,7 +10,7 @@ const SYSTEM_PROMPTS = {
 export const openaiAdapter = {
   async call(request: AIRequest, model: string, apiKey: string): Promise<AIResponse> {
     try {
-      const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+      const openai = new OpenAI({ apiKey });
 
       const completion = await openai.chat.completions.create({
         model: model || "gpt-4o-mini",
@@ -45,7 +45,7 @@ export const openaiAdapter = {
 
   async testConnection(apiKey: string): Promise<boolean> {
     try {
-      const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+      const openai = new OpenAI({ apiKey });
       await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: "Test" }],
