@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { authService } from "@/services/authService";
+import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
 import { AlertCircle, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -26,14 +26,22 @@ export default function SignupPage() {
     setError("");
 
     try {
-      const result = await authService.signUpWithEmail(email, password, name);
+      const { error: authError } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            full_name: name,
+          }
+        }
+      });
       
-      if (result.error) {
-        setError(result.error.message);
+      if (authError) {
+        setError(authError.message);
         toast({
           variant: "destructive",
           title: "Signup Failed",
-          description: result.error.message,
+          description: authError.message,
         });
         setLoading(false);
         return;
@@ -62,14 +70,14 @@ export default function SignupPage() {
     setError("");
 
     try {
-      const result = await authService.signInWithGoogle();
+      const { error: authError } = await supabase.auth.signInWithOAuth({ provider: 'google' });
       
-      if (result.error) {
-        setError(result.error.message);
+      if (authError) {
+        setError(authError.message);
         toast({
           variant: "destructive",
           title: "Google Signup Failed",
-          description: result.error.message,
+          description: authError.message,
         });
         setLoading(false);
       }

@@ -34,6 +34,7 @@ interface CompetitorData {
   }>;
   topTags: string[];
   uploadFrequency: string;
+  insights?: string;
 }
 
 interface ComparisonData {
@@ -150,10 +151,10 @@ export default function CompetitorAnalysisPage() {
       setCompetitorData(mockCompetitor);
 
       const mockComparison: ComparisonData[] = [
-        { metric: "Subscribers", yourChannel: "12,453", competitor: mockCompetitor.subscribers.toLocaleString() },
-        { metric: "Total Videos", yourChannel: "47", competitor: mockCompetitor.totalVideos.toString() },
-        { metric: "Avg. Views per Video", yourChannel: "18,900", competitor: mockCompetitor.avgViews.toLocaleString() },
-        { metric: "Upload Frequency", yourChannel: "2-3 per week", competitor: "3-4 per week" },
+        { metric: "Subscribers", yourChannel: "12,453", competitor: mockCompetitor.subscribers.toLocaleString(), difference: "-510.5k" },
+        { metric: "Total Videos", yourChannel: "47", competitor: mockCompetitor.totalVideos.toString(), difference: "-295" },
+        { metric: "Avg. Views per Video", yourChannel: "18,900", competitor: mockCompetitor.avgViews.toLocaleString(), difference: "-26.3k" },
+        { metric: "Upload Frequency", yourChannel: "2-3 per week", competitor: "3-4 per week", difference: "-1 per week" },
       ];
 
       setComparison(mockComparison);
