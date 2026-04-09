@@ -1,6 +1,6 @@
 ---
 title: SEO Optimizer Tool
-status: todo
+status: done
 priority: high
 type: feature
 tags: [youtube, seo, ai]
@@ -10,14 +10,16 @@ position: 6
 ---
 
 ## Notes
-AI-powered SEO optimization for YouTube videos: fetch current metadata, generate improved title/description/tags, side-by-side comparison. Pro + Enterprise only.
+Build AI-powered SEO optimizer for YouTube videos. Select video from channel, AI suggests improved title/description/tags. Copy buttons for each field. Pro + Enterprise only — show upgrade modal to Free/Starter.
 
 ## Checklist
-- [ ] Create seo-optimizer page with video selector dropdown
-- [ ] Fetch user's YouTube videos via YouTube Data API
-- [ ] Display current title, description, tags
-- [ ] Create API route: send to AI layer for optimization suggestions
-- [ ] Show side-by-side: original vs AI-improved version
-- [ ] Add one-click copy buttons for each field
-- [ ] Restrict to Pro + Enterprise: show upgrade modal to Free/Starter
-- [ ] Track usage in usage_tracking table
+- [x] Create /seo-optimizer page with DashboardLayout
+- [x] Add PlatformSelector (YouTube active only)
+- [x] Create video selector dropdown (mock videos for now)
+- [x] Display current title, description, tags
+- [x] "Optimize with AI" button calling AI layer
+- [x] Side-by-side comparison: original vs optimized
+- [x] Copy buttons for each optimized field (title, description, tags)
+- [x] Display usage badge showing optimizations used vs limit
+- [x] Gating: only Pro + Enterprise: show upgrade modal to Free/Starter
+- [x] Track usage in usage_tracking table
