@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PlatformSelector } from "@/components/PlatformSelector";
 import { EmptyState } from "@/components/EmptyState";
+import { CompetitorAnalysisSkeleton } from "@/components/LoadingSkeletons";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -235,26 +236,7 @@ export default function CompetitorAnalysisPage() {
               </Card>
 
               {loading && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <Skeleton className="h-6 w-32" />
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-4 w-full" />
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader>
-                      <Skeleton className="h-6 w-32" />
-                    </CardHeader>
-                    <CardContent>
-                      <Skeleton className="h-32 w-full" />
-                    </CardContent>
-                  </Card>
-                </div>
+                <CompetitorAnalysisSkeleton />
               )}
 
               {!competitorData && !loading && !error && (

@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PlatformSelector } from "@/components/PlatformSelector";
 import { EmptyState } from "@/components/EmptyState";
+import { SEOOptimizerSkeleton } from "@/components/LoadingSkeletons";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -269,16 +270,7 @@ export default function SEOOptimizerPage() {
               </Card>
 
               {loading && (
-                <Card>
-                  <CardHeader>
-                    <Skeleton className="h-6 w-48" />
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Skeleton className="h-20 w-full" />
-                    <Skeleton className="h-32 w-full" />
-                    <Skeleton className="h-16 w-full" />
-                  </CardContent>
-                </Card>
+                <SEOOptimizerSkeleton />
               )}
 
               {!optimizedResult && !loading && videoData && (

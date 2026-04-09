@@ -7,6 +7,7 @@ import { VideoCard } from "@/components/VideoCard";
 import { PlatformSelector } from "@/components/PlatformSelector";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { EmptyState } from "@/components/EmptyState";
+import { DashboardSkeleton } from "@/components/LoadingSkeletons";
 import { Users, Eye, Video, TrendingUp, Search, Sparkles, Target, Youtube } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { platformService } from "@/services/platformService";
@@ -27,9 +28,12 @@ export default function DashboardPage() {
   const [usage, setUsage] = useState({ keywordSearches: 0, seoOptimizations: 0, competitorAnalysis: 0 });
   const [dismissedAnnouncement, setDismissedAnnouncement] = useState(false);
   const [hasYouTubeConnection, setHasYouTubeConnection] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true);
+      
       const allPlatforms = await platformService.getAllPlatforms();
       setPlatforms(allPlatforms);
 
@@ -55,6 +59,8 @@ export default function DashboardPage() {
         const youtubeConnection = connections.find(c => c.platform === "youtube");
         setHasYouTubeConnection(!!youtubeConnection);
       }
+      
+      setLoading(false);
     };
 
     loadData();
@@ -84,11 +90,13 @@ export default function DashboardPage() {
       />
       <DashboardLayout>
         <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Welcome back, {user?.name}! Here's your channel overview.
-            </p>
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <PlatformSelector
+              platforms={platforms}
+              selectedPlatform={selectedPlatform}
+              onSelectPlatform={setSelectedPlatform}
+            />
           </div>
 
           {announcement && !dismissedAnnouncement && (
@@ -98,93 +106,93 @@ export default function DashboardPage() {
             />
           )}
 
-          <PlatformSelector 
-            platforms={platforms}
-            selected={selectedPlatform}
-            onSelect={setSelectedPlatform}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatsCard
-              title="Subscribers"
-              value={mockStats.subscribers.toLocaleString()}
-              icon={Users}
-              trend={{ value: "12.5%", isPositive: true }}
-            />
-            <StatsCard
-              title="Total Views"
-              value={mockStats.totalViews.toLocaleString()}
-              icon={Eye}
-              trend={{ value: "8.3%", isPositive: true }}
-            />
-            <StatsCard
-              title="Videos Published"
-              value={mockStats.videosPublished}
-              icon={Video}
-            />
-            <StatsCard
-              title="Est. Monthly Views"
-              value={mockStats.estimatedMonthlyViews.toLocaleString()}
-              icon={TrendingUp}
-              trend={{ value: "15.2%", isPositive: true }}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <UsageMeter
-              title="Keyword Searches"
-              used={usage.keywordSearches}
-              limit={currentPlan?.keyword_searches_limit || 5}
-              icon={<Search className="h-4 w-4" />}
-            />
-            <UsageMeter
-              title="SEO Optimizations"
-              used={usage.seoOptimizations}
-              limit={currentPlan?.seo_optimizations_limit || 0}
-              icon={<Sparkles className="h-4 w-4" />}
-            />
-            <UsageMeter
-              title="Competitor Analysis"
-              used={usage.competitorAnalysis}
-              limit={currentPlan?.competitor_analysis_limit || 0}
-              icon={<Target className="h-4 w-4" />}
-            />
-          </div>
-
-          {hasYouTubeConnection === false ? (
-            <EmptyState
-              icon={Youtube}
-              title="Connect Your YouTube Channel"
-              description="Get started by connecting your YouTube channel to unlock powerful analytics, keyword research, and SEO optimization tools."
-              actionLabel="Connect YouTube"
-              onAction={() => router.push("/onboarding?step=3")}
-              secondaryActionLabel="Learn More"
-              onSecondaryAction={() => router.push("/#features")}
-            />
+          {loading ? (
+            <DashboardSkeleton />
           ) : (
             <>
-              <div>
-                <h2 className="text-2xl font-bold mb-4">Recent Videos</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                  {mockVideos.map((video) => (
-                    <VideoCard key={video.videoId} {...video} />
-                  ))}
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatsCard
+                  title="Subscribers"
+                  value={mockStats.subscribers.toLocaleString()}
+                  icon={Users}
+                  trend={{ value: "12.5%", isPositive: true }}
+                />
+                <StatsCard
+                  title="Total Views"
+                  value={mockStats.totalViews.toLocaleString()}
+                  icon={Eye}
+                  trend={{ value: "8.3%", isPositive: true }}
+                />
+                <StatsCard
+                  title="Videos Published"
+                  value={mockStats.videosPublished}
+                  icon={Video}
+                />
+                <StatsCard
+                  title="Est. Monthly Views"
+                  value={mockStats.estimatedMonthlyViews.toLocaleString()}
+                  icon={TrendingUp}
+                  trend={{ value: "15.2%", isPositive: true }}
+                />
               </div>
 
-              <div>
-                <h2 className="text-2xl font-bold mb-4">Top Performing Video This Month</h2>
-                <div className="max-w-md">
-                  <VideoCard
-                    title="My Best Performing Video - 10 Tips for Channel Growth"
-                    thumbnail="https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=480&h=270&fit=crop"
-                    views={245600}
-                    likes={12300}
-                    publishedAt={new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()}
-                    videoId="top-video"
-                  />
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <UsageMeter
+                  title="Keyword Searches"
+                  used={usage.keywordSearches}
+                  limit={currentPlan?.keyword_searches_limit || 5}
+                  icon={<Search className="h-4 w-4" />}
+                />
+                <UsageMeter
+                  title="SEO Optimizations"
+                  used={usage.seoOptimizations}
+                  limit={currentPlan?.seo_optimizations_limit || 0}
+                  icon={<Sparkles className="h-4 w-4" />}
+                />
+                <UsageMeter
+                  title="Competitor Analysis"
+                  used={usage.competitorAnalysis}
+                  limit={currentPlan?.competitor_analysis_limit || 0}
+                  icon={<Target className="h-4 w-4" />}
+                />
               </div>
+
+              {hasYouTubeConnection === false ? (
+                <EmptyState
+                  icon={Youtube}
+                  title="Connect Your YouTube Channel"
+                  description="Get started by connecting your YouTube channel to unlock powerful analytics, keyword research, and SEO optimization tools."
+                  actionLabel="Connect YouTube"
+                  onAction={() => router.push("/onboarding?step=3")}
+                  secondaryActionLabel="Learn More"
+                  onSecondaryAction={() => router.push("/#features")}
+                />
+              ) : (
+                <>
+                  <div>
+                    <h2 className="text-2xl font-bold mb-4">Recent Videos</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                      {mockVideos.map((video) => (
+                        <VideoCard key={video.videoId} {...video} />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h2 className="text-2xl font-bold mb-4">Top Performing Video This Month</h2>
+                    <div className="max-w-md">
+                      <VideoCard
+                        title="My Best Performing Video - 10 Tips for Channel Growth"
+                        thumbnail="https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=480&h=270&fit=crop"
+                        views={245600}
+                        likes={12300}
+                        publishedAt={new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()}
+                        videoId="top-video"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
