@@ -51,7 +51,8 @@ export default function DashboardPage() {
           });
         }
 
-        const youtubeConnection = await platformService.getUserPlatformConnection(user.id, "youtube");
+        const connections = await platformService.getUserConnectedPlatforms(user.id);
+        const youtubeConnection = connections.find(c => c.platform === "youtube");
         setHasYouTubeConnection(!!youtubeConnection);
       }
     };
