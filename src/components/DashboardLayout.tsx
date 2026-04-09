@@ -35,7 +35,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             avatar_url: user.avatar_url || undefined,
             plan: user.plan,
           } : undefined}
-          platforms={platforms}
+          platforms={platforms.map(p => ({
+            ...p,
+            status: p.status as "live" | "coming_soon"
+          }))}
         />
       </aside>
       <main className="flex-1 overflow-y-auto">
