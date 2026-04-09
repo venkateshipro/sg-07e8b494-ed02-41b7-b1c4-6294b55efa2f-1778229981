@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { PlatformBadge } from "@/components/PlatformBadge";
-import type { PlatformStatus } from "@/components/PlatformBadge";
+
+type PlatformStatus = "live" | "coming_soon";
 
 const features = [
   { title: "AI Keyword Explorer", description: "Discover high-volume, low-competition keywords before your competitors do.", icon: Search },
