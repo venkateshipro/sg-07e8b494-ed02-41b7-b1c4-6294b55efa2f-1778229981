@@ -51,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     let limit = 0;
     let used = 0;
-    let column = "";
+    let column: "keyword_searches" | "seo_optimizations" | "competitor_analysis";
 
     if (type === "keyword_analysis") {
       limit = plan.keyword_searches_limit;
@@ -65,6 +65,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       limit = plan.competitor_analysis_limit;
       used = usage?.competitor_analysis || 0;
       column = "competitor_analysis";
+    } else {
+      return res.status(400).json({ error: "Invalid request type" });
     }
 
     if (limit !== -1 && used >= limit) {
@@ -89,12 +91,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const newUsage = {
         user_id: userId,
         date: today,
-        keyword_searches: 0,
-        seo_optimizations: 0,
-        competitor_analysis: 0,
+        keyword_searches: column === "keyword_searches" ? 1 : 0,
+        seo_optimizations: column === "seo_optimizations" ? 1 : 0,
+        competitor_analysis: column === "competitor_analysis" ? 1 : 0,
       };
-      // @ts-ignore - dynamic column assignment
-      newUsage[column] = 1;
       await supabaseAdmin.from("usage_tracking").insert([newUsage]);
     }
 
