@@ -6,7 +6,8 @@ import { UsageMeter } from "@/components/UsageMeter";
 import { VideoCard } from "@/components/VideoCard";
 import { PlatformSelector } from "@/components/PlatformSelector";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
-import { Users, Eye, Video, TrendingUp, Search, Sparkles, Target } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
+import { Users, Eye, Video, TrendingUp, Search, Sparkles, Target, Youtube } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { platformService } from "@/services/platformService";
 import { planService } from "@/services/planService";
@@ -14,15 +15,18 @@ import { usageService } from "@/services/usageService";
 import { announcementService } from "@/services/announcementService";
 import type { PlatformConfig, Announcement, Plan } from "@/types/database";
 import { SEO } from "@/components/SEO";
+import { useRouter } from "next/router";
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [platforms, setPlatforms] = useState<PlatformConfig[]>([]);
   const [selectedPlatform, setSelectedPlatform] = useState("youtube");
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null);
   const [usage, setUsage] = useState({ keywordSearches: 0, seoOptimizations: 0, competitorAnalysis: 0 });
   const [dismissedAnnouncement, setDismissedAnnouncement] = useState(false);
+  const [hasYouTubeConnection, setHasYouTubeConnection] = useState<boolean | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -46,6 +50,9 @@ export default function DashboardPage() {
             competitorAnalysis: todayUsage.competitor_analysis,
           });
         }
+
+        const youtubeConnection = await platformService.getUserPlatformConnection(user.id, "youtube");
+        setHasYouTubeConnection(!!youtubeConnection);
       }
     };
 
@@ -143,28 +150,42 @@ export default function DashboardPage() {
             />
           </div>
 
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Recent Videos</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-              {mockVideos.map((video) => (
-                <VideoCard key={video.videoId} {...video} />
-              ))}
-            </div>
-          </div>
+          {hasYouTubeConnection === false ? (
+            <EmptyState
+              icon={Youtube}
+              title="Connect Your YouTube Channel"
+              description="Get started by connecting your YouTube channel to unlock powerful analytics, keyword research, and SEO optimization tools."
+              actionLabel="Connect YouTube"
+              onAction={() => router.push("/onboarding?step=3")}
+              secondaryActionLabel="Learn More"
+              onSecondaryAction={() => router.push("/#features")}
+            />
+          ) : (
+            <>
+              <div>
+                <h2 className="text-2xl font-bold mb-4">Recent Videos</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                  {mockVideos.map((video) => (
+                    <VideoCard key={video.videoId} {...video} />
+                  ))}
+                </div>
+              </div>
 
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Top Performing Video This Month</h2>
-            <div className="max-w-md">
-              <VideoCard
-                title="My Best Performing Video - 10 Tips for Channel Growth"
-                thumbnail="https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=480&h=270&fit=crop"
-                views={245600}
-                likes={12300}
-                publishedAt={new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()}
-                videoId="top-video"
-              />
-            </div>
-          </div>
+              <div>
+                <h2 className="text-2xl font-bold mb-4">Top Performing Video This Month</h2>
+                <div className="max-w-md">
+                  <VideoCard
+                    title="My Best Performing Video - 10 Tips for Channel Growth"
+                    thumbnail="https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=480&h=270&fit=crop"
+                    views={245600}
+                    likes={12300}
+                    publishedAt={new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()}
+                    videoId="top-video"
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </DashboardLayout>
     </ProtectedRoute>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PlatformSelector } from "@/components/PlatformSelector";
+import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Sparkles, Copy, Check, AlertCircle, Lock } from "lucide-react";
+import { Sparkles, Copy, Check, AlertCircle, Lock, Zap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { platformService } from "@/services/platformService";
 import { planService } from "@/services/planService";
@@ -278,6 +279,14 @@ export default function SEOOptimizerPage() {
                     <Skeleton className="h-16 w-full" />
                   </CardContent>
                 </Card>
+              )}
+
+              {!optimizedResult && !loading && videoData && (
+                <EmptyState
+                  icon={Zap}
+                  title="AI-Powered SEO Optimization"
+                  description="Click the 'Optimize with AI' button above to transform your video's title, description, and tags for maximum discoverability and engagement."
+                />
               )}
 
               {optimizedResult && !loading && (

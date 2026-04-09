@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PlatformSelector } from "@/components/PlatformSelector";
+import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Search, TrendingUp, AlertCircle, Sparkles } from "lucide-react";
+import { Search, TrendingUp, AlertCircle, Sparkles, Lightbulb } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { platformService } from "@/services/platformService";
 import { planService } from "@/services/planService";
@@ -193,6 +194,19 @@ export default function KeywordExplorerPage() {
               )}
             </CardContent>
           </Card>
+
+          {!results && !loading && !error && (
+            <EmptyState
+              icon={Lightbulb}
+              title="Discover High-Performing Keywords"
+              description="Enter a keyword above to unlock AI-powered insights including competition analysis, related keywords, and top-ranking videos in your niche."
+              actionLabel="Try Example: 'video editing'"
+              onAction={() => {
+                setKeyword("video editing");
+                handleSearch();
+              }}
+            />
+          )}
 
           {loading && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PlatformSelector } from "@/components/PlatformSelector";
+import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Target, AlertCircle, Lock, TrendingUp, Users } from "lucide-react";
+import { Search, Target, AlertCircle, Lock, TrendingUp, Users, BarChart3 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { platformService } from "@/services/platformService";
 import { planService } from "@/services/planService";
@@ -254,6 +255,19 @@ export default function CompetitorAnalysisPage() {
                     </CardContent>
                   </Card>
                 </div>
+              )}
+
+              {!competitorData && !loading && !error && (
+                <EmptyState
+                  icon={BarChart3}
+                  title="Analyze Your Competitors"
+                  description="Enter a competitor's YouTube channel URL or handle above to uncover their content strategy, growth patterns, and top-performing content. Learn what works in your niche."
+                  actionLabel="Try Example Channel"
+                  onAction={() => {
+                    setCompetitorUrl("@mkbhd");
+                    handleAnalyze();
+                  }}
+                />
               )}
 
               {competitorData && !loading && (
