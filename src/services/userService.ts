@@ -2,6 +2,21 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User, UserInsert, UserUpdate } from "@/types/database";
 
 export const userService = {
+  async getById(userId: string): Promise<User | null> {
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching user by id:", error);
+      return null;
+    }
+
+    return data;
+  },
+
   async getCurrentUser(): Promise<User | null> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
