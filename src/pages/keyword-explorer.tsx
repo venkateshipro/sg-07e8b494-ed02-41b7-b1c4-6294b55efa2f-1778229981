@@ -17,6 +17,7 @@ import { platformService } from "@/services/platformService";
 import { planService } from "@/services/planService";
 import { usageService } from "@/services/usageService";
 import { SEO } from "@/components/SEO";
+import { useToast } from "@/hooks/use-toast";
 import type { PlatformConfig, Plan } from "@/types/database";
 
 interface KeywordResult {
@@ -33,6 +34,7 @@ interface KeywordResult {
 
 export default function KeywordExplorerPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [platforms, setPlatforms] = useState<PlatformConfig[]>([]);
   const [selectedPlatform, setSelectedPlatform] = useState("youtube");
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null);
@@ -59,6 +61,11 @@ export default function KeywordExplorerPage() {
     } catch (err) {
       console.error("Failed to load initial data:", err);
       setDataLoadError(err instanceof Error ? err : new Error("Failed to load page data"));
+      toast({
+        variant: "destructive",
+        title: "Failed to Load Page",
+        description: "Could not load keyword explorer data. Please refresh the page.",
+      });
     }
   };
 
@@ -87,12 +94,22 @@ export default function KeywordExplorerPage() {
 
       if (!response.ok) {
         setError(data.error || "Daily keyword search limit reached. Upgrade your plan for more searches.");
+        toast({
+          variant: "destructive",
+          title: "Search Limit Reached",
+          description: data.error || "You've reached your daily keyword search limit. Upgrade your plan for unlimited searches.",
+        });
         setLoading(false);
         return;
       }
 
       if (!data.success) {
         setError(data.error || "Failed to analyze keyword");
+        toast({
+          variant: "destructive",
+          title: "Analysis Failed",
+          description: data.error || "Failed to analyze keyword. Please try again.",
+        });
         setLoading(false);
         return;
       }
@@ -121,8 +138,19 @@ export default function KeywordExplorerPage() {
 
       setResults(mockResult);
       setUsage(usage + 1);
+      
+      toast({
+        title: "Analysis Complete",
+        description: `Found ${mockResult.relatedKeywords.length} related keywords and ${mockResult.topVideos.length} top videos.`,
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      setError(errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Search Failed",
+        description: errorMessage,
+      });
     } finally {
       setLoading(false);
     }

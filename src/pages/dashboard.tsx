@@ -18,10 +18,12 @@ import { announcementService } from "@/services/announcementService";
 import type { PlatformConfig, Announcement, Plan } from "@/types/database";
 import { SEO } from "@/components/SEO";
 import { useRouter } from "next/router";
+import { useToast } from "@/hooks/use-toast";
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [platforms, setPlatforms] = useState<PlatformConfig[]>([]);
   const [selectedPlatform, setSelectedPlatform] = useState("youtube");
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
@@ -67,6 +69,11 @@ export default function DashboardPage() {
     } catch (err) {
       console.error("Dashboard data loading error:", err);
       setError(err instanceof Error ? err : new Error("Failed to load dashboard data"));
+      toast({
+        variant: "destructive",
+        title: "Failed to Load Dashboard",
+        description: "Could not load dashboard data. Please refresh the page.",
+      });
       setLoading(false);
     }
   };

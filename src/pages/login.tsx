@@ -1,61 +1,84 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, Mail } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { authService } from "@/services/authService";
 import { SEO } from "@/components/SEO";
+import { AlertCircle, Sparkles } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const { toast } = useToast();
+  const [error, setError] = useState("");
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const result = await authService.signInWithEmail(email, password);
+      
+      if (result.error) {
+        setError(result.error.message);
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: result.error.message,
+        });
+        setLoading(false);
+        return;
+      }
 
-    if (error) {
-      toast({
-        title: "Login failed",
-        description: error.message,
-        variant: "destructive",
-      });
-      setLoading(false);
-    } else {
       toast({
         title: "Welcome back!",
-        description: "Redirecting to dashboard...",
+        description: "You've successfully signed in.",
       });
+
       router.push("/dashboard");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred during login";
+      setError(errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: errorMessage,
+      });
+      setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    setError("");
 
-    if (error) {
+    try {
+      const result = await authService.signInWithGoogle();
+      
+      if (result.error) {
+        setError(result.error.message);
+        toast({
+          variant: "destructive",
+          title: "Google Login Failed",
+          description: result.error.message,
+        });
+        setLoading(false);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred during Google login";
+      setError(errorMessage);
       toast({
-        title: "Login failed",
-        description: error.message,
         variant: "destructive",
+        title: "Google Login Failed",
+        description: errorMessage,
       });
       setLoading(false);
     }

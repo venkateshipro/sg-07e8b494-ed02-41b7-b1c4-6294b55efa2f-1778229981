@@ -1,67 +1,85 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { authService } from "@/services/authService";
 import { SEO } from "@/components/SEO";
+import { AlertCircle, Sparkles } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SignupPage() {
+  const router = useRouter();
+  const { toast } = useToast();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const { toast } = useToast();
+  const [error, setError] = useState("");
 
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name,
-        },
-      },
-    });
+    try {
+      const result = await authService.signUpWithEmail(email, password, name);
+      
+      if (result.error) {
+        setError(result.error.message);
+        toast({
+          variant: "destructive",
+          title: "Signup Failed",
+          description: result.error.message,
+        });
+        setLoading(false);
+        return;
+      }
 
-    if (error) {
       toast({
-        title: "Signup failed",
-        description: error.message,
+        title: "Account Created!",
+        description: "Welcome to FaGrow. Let's get you set up.",
+      });
+
+      router.push("/onboarding");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred during signup";
+      setError(errorMessage);
+      toast({
         variant: "destructive",
+        title: "Signup Failed",
+        description: errorMessage,
       });
       setLoading(false);
-    } else {
-      toast({
-        title: "Account created!",
-        description: "Please check your email to verify your account.",
-      });
-      router.push("/onboarding");
     }
   };
 
   const handleGoogleSignup = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    setError("");
 
-    if (error) {
+    try {
+      const result = await authService.signInWithGoogle();
+      
+      if (result.error) {
+        setError(result.error.message);
+        toast({
+          variant: "destructive",
+          title: "Google Signup Failed",
+          description: result.error.message,
+        });
+        setLoading(false);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred during Google signup";
+      setError(errorMessage);
       toast({
-        title: "Signup failed",
-        description: error.message,
         variant: "destructive",
+        title: "Google Signup Failed",
+        description: errorMessage,
       });
       setLoading(false);
     }

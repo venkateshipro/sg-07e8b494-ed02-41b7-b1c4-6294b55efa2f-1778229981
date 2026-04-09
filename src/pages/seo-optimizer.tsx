@@ -87,6 +87,11 @@ export default function SEOOptimizerPage() {
     } catch (err) {
       console.error("Failed to load initial data:", err);
       setDataLoadError(err instanceof Error ? err : new Error("Failed to load page data"));
+      toast({
+        variant: "destructive",
+        title: "Failed to Load Page",
+        description: "Could not load SEO optimizer data. Please refresh the page.",
+      });
     }
   };
 
@@ -102,6 +107,10 @@ export default function SEOOptimizerPage() {
     setVideoData(video || null);
     setOptimizedResult(null);
     setError(null);
+    toast({
+      title: "Video Selected",
+      description: `Now optimizing: ${video?.title.substring(0, 50)}...`,
+    });
   };
 
   const handleOptimize = async () => {
@@ -116,7 +125,7 @@ export default function SEOOptimizerPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "seo_optimization",
-          input: `Optimize this YouTube video for SEO:\nTitle: ${videoData.title}\nDescription: ${videoData.description}\nTags: ${videoData.tags.join(", ")}\n\nReturn improved versions with better keywords and engagement potential.`,
+          input: `Optimize this YouTube video for SEO:\nTitle: ${videoData.title}\nDescription: ${videoData.description}\nTags: ${videoData.tags.join(", ")}`,
           userId: user.id,
         }),
       });
@@ -124,33 +133,50 @@ export default function SEOOptimizerPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "Daily SEO optimization limit reached. Try again tomorrow.");
+        setError(data.error || "Daily optimization limit reached.");
+        toast({
+          variant: "destructive",
+          title: "Optimization Limit Reached",
+          description: data.error || "You've reached your daily SEO optimization limit.",
+        });
         setLoading(false);
         return;
       }
 
       if (!data.success) {
-        setError(data.error || "Failed to optimize video");
+        setError(data.error || "Failed to optimize");
+        toast({
+          variant: "destructive",
+          title: "Optimization Failed",
+          description: data.error || "Failed to optimize video. Please try again.",
+        });
         setLoading(false);
         return;
       }
 
       const aiData = data.data;
 
-      const result: OptimizationResult = {
-        title: aiData?.title || `${videoData.title} | Complete Guide 2026`,
-        description:
-          aiData?.description ||
-          `${videoData.description}\n\n📌 Timestamps:\n0:00 - Introduction\n2:30 - Main Content\n8:45 - Conclusion\n\n🔔 Subscribe for more content!`,
-        tags:
-          aiData?.tags ||
-          [...videoData.tags, "tutorial", "guide", "2026", "how to", "tips", "beginners", "step by step"],
+      const optimized: OptimizationResult = {
+        title: aiData?.title || `${videoData.title} - Expert Tips & Complete Guide 2026`,
+        description: aiData?.description || `${videoData.description}\n\n🎯 In this comprehensive guide, you'll learn everything about ${videoData.title.toLowerCase()}...`,
+        tags: aiData?.tags || [...videoData.tags, "tutorial", "guide 2026", "tips and tricks", "for beginners"],
       };
 
-      setOptimizedResult(result);
+      setOptimizedResult(optimized);
       setUsage(usage + 1);
+      
+      toast({
+        title: "Optimization Complete",
+        description: "AI has generated optimized title, description, and tags for your video.",
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      setError(errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Optimization Failed",
+        description: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
@@ -159,10 +185,12 @@ export default function SEOOptimizerPage() {
   const handleCopy = (field: string, text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedFields({ ...copiedFields, [field]: true });
+    
     toast({
-      title: "Copied!",
-      description: `${field} copied to clipboard`,
+      title: "Copied to Clipboard",
+      description: `${field.charAt(0).toUpperCase() + field.slice(1)} copied successfully.`,
     });
+
     setTimeout(() => {
       setCopiedFields({ ...copiedFields, [field]: false });
     }, 2000);
