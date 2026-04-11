@@ -30,12 +30,17 @@ export const adminService = {
       // Get all subscriptions for MRR calculation
       const { data: subs } = await supabase
         .from("subscriptions")
-        .select("plan_id, plans(price)")
+        .select("plan")
         .eq("status", "active");
 
+      const { data: plans } = await supabase
+        .from("plans")
+        .select("slug, price");
+        
+      const planPrices = Object.fromEntries(plans?.map(p => [p.slug, Number(p.price)]) || []);
+
       const mrr = subs?.reduce((sum, sub) => {
-        const price = (sub.plans as any)?.price || 0;
-        return sum + price;
+        return sum + (planPrices[sub.plan] || 0);
       }, 0) || 0;
 
       // Calculate churn rate (simplified - last 30 days)
@@ -109,21 +114,25 @@ export const adminService = {
   // Get revenue by plan
   async getRevenueByPlan() {
     try {
-      const { data, error } = await supabase
+      const { data: subs, error } = await supabase
         .from("subscriptions")
-        .select("plan_id, plans(name, price)")
+        .select("plan")
         .eq("status", "active");
 
       if (error) throw error;
+      
+      const { data: plans } = await supabase
+        .from("plans")
+        .select("name, slug, price");
+        
+      const planDetails = Object.fromEntries(plans?.map(p => [p.slug, { name: p.name, price: Number(p.price) }]) || []);
 
       const revenueMap: Record<string, number> = {};
       
-      data?.forEach((sub) => {
-        const plan = sub.plans as any;
-        if (plan) {
-          const planName = plan.name;
-          const price = plan.price || 0;
-          revenueMap[planName] = (revenueMap[planName] || 0) + price;
+      subs?.forEach((sub) => {
+        const details = planDetails[sub.plan];
+        if (details) {
+          revenueMap[details.name] = (revenueMap[details.name] || 0) + details.price;
         }
       });
 
@@ -141,7 +150,7 @@ export const adminService = {
   async getPlatformUsage() {
     try {
       const { data, error } = await supabase
-        .from("user_platforms")
+        .from("connected_platforms")
         .select("platform");
 
       if (error) throw error;
@@ -233,19 +242,19 @@ export const adminService = {
       // Get user's subscription
       const { data: subscription } = await supabase
         .from("subscriptions")
-        .select("*, plans(*)")
+        .select("*")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
       // Get user's platforms
       const { data: platforms } = await supabase
-        .from("user_platforms")
+        .from("connected_platforms")
         .select("*")
         .eq("user_id", userId);
 
       // Get user's usage
       const { data: usage } = await supabase
-        .from("usage")
+        .from("usage_tracking")
         .select("*")
         .eq("user_id", userId)
         .order("date", { ascending: false })
@@ -305,10 +314,10 @@ export const adminService = {
     try {
       let query = supabase
         .from("subscriptions")
-        .select("*, users(name, email), plans(name, price)");
+        .select("*, users(name, email)");
 
       if (filters?.plan) {
-        query = query.eq("plan_id", filters.plan);
+        query = query.eq("plan", filters.plan);
       }
 
       if (filters?.status) {
@@ -325,10 +334,17 @@ export const adminService = {
 
       query = query.order("created_at", { ascending: false });
 
-      const { data, error } = await query;
+      const { data: subs, error } = await query;
 
       if (error) throw error;
-      return data || [];
+      
+      const { data: plans } = await supabase.from("plans").select("slug, name, price");
+      const planDetails = Object.fromEntries(plans?.map(p => [p.slug, { name: p.name, price: Number(p.price) }]) || []);
+
+      return (subs || []).map(sub => ({
+        ...sub,
+        plans: planDetails[sub.plan] || { name: sub.plan, price: 0 }
+      }));
     } catch (error) {
       console.error("Error fetching subscriptions:", error);
       throw error;

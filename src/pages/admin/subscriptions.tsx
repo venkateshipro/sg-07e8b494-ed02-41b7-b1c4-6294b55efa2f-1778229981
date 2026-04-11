@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 interface Subscription {
   id: string;
   user_id: string;
-  plan_id: string;
+  plan: string;
   status: string;
   created_at: string;
   current_period_start: string | null;
