@@ -252,7 +252,7 @@ export default function AdminOverviewPage() {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={({ platform, count }) => `${platform}: ${count}`}
+                          label={(entry: any) => `${entry.platform}: ${entry.count}`}
                           outerRadius={100}
                           fill="hsl(var(--primary))"
                           dataKey="count"
