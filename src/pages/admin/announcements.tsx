@@ -242,7 +242,7 @@ export default function AdminAnnouncementsPage() {
     setSelectedAnnouncement(announcement);
     setFormTitle(announcement.title);
     setFormMessage(announcement.message);
-    setFormType(announcement.type);
+    setFormType(announcement.type as "info" | "warning" | "success");
     setFormActive(announcement.active);
     setEditDialogOpen(true);
   };
