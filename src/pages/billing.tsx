@@ -166,7 +166,7 @@ export default function BillingPage() {
         },
       };
 
-      // @ts-ignore - Razorpay is loaded via script
+      // @ts-expect-error - Razorpay is loaded via script
       const razorpay = new window.Razorpay(options);
       razorpay.open();
     } catch (err) {
@@ -359,7 +359,7 @@ export default function BillingPage() {
                       return (
                         <PlanCard
                           key={plan.id}
-                          name={plan.name}
+                          title={plan.name}
                           price={plan.price}
                           features={[
                             plan.keyword_searches_limit === -1 ? "Unlimited keyword searches" : `${plan.keyword_searches_limit} keyword searches/day`,
