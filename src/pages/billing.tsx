@@ -359,24 +359,13 @@ export default function BillingPage() {
                       return (
                         <PlanCard
                           key={plan.id}
-                          title={plan.name}
-                          price={plan.price}
-                          features={[
-                            plan.keyword_searches_limit === -1 ? "Unlimited keyword searches" : `${plan.keyword_searches_limit} keyword searches/day`,
-                            plan.seo_optimizations_limit === -1 ? "Unlimited SEO optimizations" : `${plan.seo_optimizations_limit} SEO optimizations/day`,
-                            plan.competitor_analysis_limit === -1 ? "Unlimited competitor analysis" : `${plan.competitor_analysis_limit} competitor analyses/day`,
-                            `${plan.platforms_limit === -1 ? "Unlimited" : plan.platforms_limit} platforms`,
-                            `${plan.team_members_limit === -1 ? "Unlimited" : plan.team_members_limit} team members`,
-                            plan.priority_support ? "Priority support" : "Standard support",
-                          ]}
-                          cta={isCurrent ? "Current Plan" : plan.price === 0 ? "Downgrade" : "Upgrade"}
-                          highlighted={plan.slug === "pro"}
-                          onCtaClick={() => {
+                          plan={plan}
+                          currentPlan={user?.plan}
+                          onSelect={() => {
                             if (!isCurrent) {
                               handleUpgrade(plan.slug);
                             }
                           }}
-                          disabled={isCurrent || upgrading}
                           loading={upgrading}
                         />
                       );
