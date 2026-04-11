@@ -1,93 +1,57 @@
 import { useState } from "react";
-import { useRouter } from "next/router";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
-import { SEO } from "@/components/SEO";
-import { AlertCircle, Sparkles } from "lucide-react";
+import { Sparkles, Chrome } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/services/authService";
+import { SEO } from "@/components/SEO";
 
-export default function SignupPage() {
+export default function Signup() {
   const router = useRouter();
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     try {
-      const { error: authError } = await supabase.auth.signUp({ 
-        email, 
-        password,
-        options: {
-          data: {
-            full_name: name,
-          }
-        }
-      });
+      await authService.signUpWithEmail(email, password, name);
       
-      if (authError) {
-        setError(authError.message);
-        toast({
-          variant: "destructive",
-          title: "Signup Failed",
-          description: authError.message,
-        });
-        setLoading(false);
-        return;
-      }
-
       toast({
-        title: "Account Created!",
-        description: "Welcome to FaGrow. Let's get you set up.",
+        title: "Account created!",
+        description: "Welcome to FaGrow. Let's get started!",
       });
 
       router.push("/onboarding");
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An error occurred during signup";
-      setError(errorMessage);
+    } catch (error: any) {
       toast({
+        title: "Signup failed",
+        description: error.message || "Could not create your account",
         variant: "destructive",
-        title: "Signup Failed",
-        description: errorMessage,
       });
+    } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleSignup = async () => {
     setLoading(true);
-    setError("");
-
     try {
-      const { error: authError } = await supabase.auth.signInWithOAuth({ provider: 'google' });
-      
-      if (authError) {
-        setError(authError.message);
-        toast({
-          variant: "destructive",
-          title: "Google Signup Failed",
-          description: authError.message,
-        });
-        setLoading(false);
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An error occurred during Google signup";
-      setError(errorMessage);
+      await authService.signInWithGoogle();
+      // After Google auth, redirect to onboarding
+    } catch (error: any) {
       toast({
+        title: "Signup failed",
+        description: error.message || "Could not sign up with Google",
         variant: "destructive",
-        title: "Google Signup Failed",
-        description: errorMessage,
       });
       setLoading(false);
     }
@@ -96,10 +60,12 @@ export default function SignupPage() {
   return (
     <>
       <SEO 
-        title="Sign Up - FaGrow"
-        description="Create your FaGrow account and start growing your social media"
+        title="Sign Up - FaGrow | Start Growing Your Social Media Today"
+        description="Create your free FaGrow account and start optimizing your YouTube channel with AI-powered SEO tools. No credit card required."
+        url="/signup"
       />
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">

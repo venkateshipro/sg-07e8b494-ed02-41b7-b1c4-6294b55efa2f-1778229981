@@ -1,130 +1,114 @@
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Check, Sparkles } from "lucide-react";
+import { ThemeSwitch } from "@/components/ThemeSwitch";
+import { MobileNav } from "@/components/MobileNav";
+import { 
+  Sparkles, CheckCircle2, ArrowRight, Menu, X 
+} from "lucide-react";
 import { SEO } from "@/components/SEO";
 
-export default function PricingPage() {
-  const plans = [
-    {
-      name: "Free",
-      price: 0,
-      description: "Perfect for getting started",
-      features: [
-        "5 keyword searches per day",
-        "YouTube platform only",
-        "1 team member",
-        "Standard support",
-        "Basic analytics",
-      ],
-      cta: "Get Started",
-      highlighted: false,
-    },
-    {
-      name: "Starter",
-      price: 9,
-      description: "For growing creators",
-      features: [
-        "20 keyword searches per day",
-        "YouTube platform only",
-        "1 team member",
-        "Standard support",
-        "Advanced analytics",
-        "Export data",
-      ],
-      cta: "Start Free Trial",
-      highlighted: false,
-    },
-    {
-      name: "Pro",
-      price: 29,
-      description: "For professional creators",
-      features: [
-        "Unlimited keyword searches",
-        "SEO Optimizer (unlimited)",
-        "Competitor Analysis (unlimited)",
-        "YouTube platform only",
-        "3 team members",
-        "Priority email support",
-        "Advanced analytics",
-        "Export data",
-        "Custom reports",
-      ],
-      cta: "Start Free Trial",
-      highlighted: true,
-    },
-    {
-      name: "Enterprise",
-      price: 99,
-      description: "For agencies and teams",
-      features: [
-        "Everything in Pro",
-        "All platforms (when available)",
-        "10 team members",
-        "Priority support with SLA",
-        "Dedicated account manager",
-        "Custom integrations",
-        "API access",
-        "Advanced security",
-        "Custom training",
-      ],
-      cta: "Contact Sales",
-      highlighted: false,
-    },
-  ];
+const plans = [
+  { 
+    name: "Free", 
+    price: 0, 
+    period: "forever",
+    features: [
+      "5 keyword searches per day",
+      "Basic YouTube analytics",
+      "1 connected channel",
+      "Community support"
+    ], 
+    cta: "Start Free", 
+    highlighted: false,
+    description: "Perfect for beginners exploring social media growth"
+  },
+  { 
+    name: "Starter", 
+    price: 29, 
+    period: "month",
+    features: [
+      "Unlimited keyword searches",
+      "100 AI SEO optimizations per month",
+      "5 competitor analyses per month",
+      "3 connected channels",
+      "Email support"
+    ], 
+    cta: "Start 14-Day Trial", 
+    highlighted: false,
+    description: "For growing creators ready to scale"
+  },
+  { 
+    name: "Pro", 
+    price: 79, 
+    period: "month",
+    features: [
+      "Unlimited AI SEO optimizations",
+      "Unlimited competitor analysis",
+      "Trend forecasting alerts",
+      "10 connected channels",
+      "Priority support",
+      "Advanced analytics dashboard"
+    ], 
+    cta: "Start 14-Day Trial", 
+    highlighted: true,
+    description: "For professional creators and agencies"
+  },
+  { 
+    name: "Enterprise", 
+    price: 199, 
+    period: "month",
+    features: [
+      "Unlimited everything",
+      "API access for integrations",
+      "Custom AI model training",
+      "Unlimited channels",
+      "Dedicated success manager",
+      "Team collaboration tools",
+      "White-label options"
+    ], 
+    cta: "Contact Sales", 
+    highlighted: false,
+    description: "For teams and enterprises at scale"
+  }
+];
 
-  const faqs = [
-    {
-      question: "What payment methods do you accept?",
-      answer:
-        "We accept all major credit cards and debit cards through our secure payment processor Razorpay. All transactions are encrypted and secure.",
-    },
-    {
-      question: "Can I change my plan later?",
-      answer:
-        "Yes! You can upgrade or downgrade your plan at any time. Upgrades take effect immediately, and you'll be charged the prorated difference. Downgrades take effect at the end of your current billing period.",
-    },
-    {
-      question: "What happens when I reach my daily limit?",
-      answer:
-        "When you reach your daily keyword search limit, you'll need to wait until the next day (resets at midnight UTC) or upgrade to a plan with higher limits. Pro and Enterprise plans offer unlimited searches.",
-    },
-    {
-      question: "Do you offer annual billing?",
-      answer:
-        "Yes! Contact our sales team for annual billing options. Annual subscriptions come with a discount compared to monthly billing.",
-    },
-    {
-      question: "Can I cancel anytime?",
-      answer:
-        "Yes, you can cancel your subscription at any time from your billing settings. Your access will continue until the end of your current billing period, and you won't be charged again.",
-    },
-    {
-      question: "Is there a free trial?",
-      answer:
-        "Yes! All paid plans include a 14-day free trial. No credit card required to start. You can explore all features and cancel anytime during the trial without being charged.",
-    },
-    {
-      question: "What's included in priority support?",
-      answer:
-        "Priority support includes faster response times (typically within 4 hours), direct access to our support team via email, and priority queue for feature requests. Enterprise plans also include phone support and a dedicated account manager.",
-    },
-    {
-      question: "How do team members work?",
-      answer:
-        "Team members can be invited to collaborate on your account. Each plan has a limit on team members. Team members share the account's usage limits and can access all features based on their assigned permissions.",
-    },
-  ];
+const faqs = [
+  { 
+    question: "How does billing work?", 
+    answer: "All paid plans are billed monthly via Razorpay. You can cancel anytime and you'll retain access until the end of your billing period." 
+  },
+  { 
+    question: "Can I switch plans later?", 
+    answer: "Yes! You can upgrade or downgrade your plan at any time from your billing dashboard. Changes take effect immediately." 
+  },
+  { 
+    question: "Do you offer refunds?", 
+    answer: "We offer a 14-day free trial for all paid plans so you can test the platform risk-free. After that, refunds are evaluated on a case-by-case basis." 
+  },
+  { 
+    question: "What payment methods do you accept?", 
+    answer: "We accept all major credit/debit cards, UPI, net banking, and wallets through our secure payment partner Razorpay." 
+  },
+  { 
+    question: "Is there a setup fee?", 
+    answer: "No setup fees, no hidden costs. You only pay the plan price listed." 
+  }
+];
 
+export default function Pricing() {
   return (
     <>
-      <SEO
-        title="Pricing - FaGrow"
-        description="Choose the perfect plan for your social media growth needs. Start free, upgrade anytime."
+      <SEO 
+        title="Pricing - FaGrow | Affordable Plans for Social Media Growth"
+        description="Choose the perfect plan for your social media growth journey. From free forever to enterprise-scale solutions. 14-day free trial on all paid plans."
+        image="/og-image.png"
+        url="/pricing"
       />
-
+      
       <div className="min-h-screen bg-background">
         {/* Header */}
         <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">

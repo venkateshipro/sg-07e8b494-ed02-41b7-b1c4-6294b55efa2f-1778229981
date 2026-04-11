@@ -1,0 +1,16 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://fagrow.com/sitemap.xml
+
+# Disallow admin and user pages
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /billing
+Disallow: /settings
+Disallow: /keyword-explorer
+Disallow: /seo-optimizer
+Disallow: /competitor-analysis
+Disallow: /onboarding

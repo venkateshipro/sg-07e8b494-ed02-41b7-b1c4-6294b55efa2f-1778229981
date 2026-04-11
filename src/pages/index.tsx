@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { PlatformBadge } from "@/components/PlatformBadge";
+import type { PlatformStatus } from "@/components/PlatformBadge";
 
 type PlatformStatus = "live" | "coming_soon";
 
@@ -50,7 +51,9 @@ export default function Home() {
     <>
       <SEO 
         title="FaGrow - Multi-Platform Social Media SEO & Growth SaaS"
-        description="Grow your YouTube channel with AI-powered keyword research, SEO optimization, and competitor analysis. More platforms coming soon."
+        description="Grow your YouTube channel with AI-powered keyword research, SEO optimization, and competitor analysis. More platforms coming soon: Instagram, TikTok, X, LinkedIn, Facebook."
+        image="/og-image.png"
+        url="/"
       />
       
       <div className="min-h-screen bg-background">
