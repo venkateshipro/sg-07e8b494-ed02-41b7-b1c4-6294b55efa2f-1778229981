@@ -172,7 +172,7 @@ export default function Pricing() {
                     <ul className="space-y-3">
                       {plan.features.map((feature, featureIdx) => (
                         <li key={featureIdx} className="flex items-start gap-2">
-                          <Check className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
+                          <CheckCircle2 className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
                           <span className="text-sm">{feature}</span>
                         </li>
                       ))}
@@ -220,10 +220,10 @@ export default function Pricing() {
                     <td className="text-center py-4 px-4">—</td>
                     <td className="text-center py-4 px-4">—</td>
                     <td className="text-center py-4 px-4 bg-primary/5">
-                      <Check className="h-5 w-5 text-accent mx-auto" />
+                      <CheckCircle2 className="h-5 w-5 text-accent mx-auto" />
                     </td>
                     <td className="text-center py-4 px-4">
-                      <Check className="h-5 w-5 text-accent mx-auto" />
+                      <CheckCircle2 className="h-5 w-5 text-accent mx-auto" />
                     </td>
                   </tr>
                   <tr className="border-b border-border">
@@ -231,10 +231,10 @@ export default function Pricing() {
                     <td className="text-center py-4 px-4">—</td>
                     <td className="text-center py-4 px-4">—</td>
                     <td className="text-center py-4 px-4 bg-primary/5">
-                      <Check className="h-5 w-5 text-accent mx-auto" />
+                      <CheckCircle2 className="h-5 w-5 text-accent mx-auto" />
                     </td>
                     <td className="text-center py-4 px-4">
-                      <Check className="h-5 w-5 text-accent mx-auto" />
+                      <CheckCircle2 className="h-5 w-5 text-accent mx-auto" />
                     </td>
                   </tr>
                   <tr className="border-b border-border">

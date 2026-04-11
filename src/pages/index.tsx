@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { PlatformBadge } from "@/components/PlatformBadge";
-import type { PlatformStatus } from "@/components/PlatformBadge";
 
 type PlatformStatus = "live" | "coming_soon";
 
