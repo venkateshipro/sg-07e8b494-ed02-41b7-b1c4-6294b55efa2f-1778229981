@@ -23,7 +23,9 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      await authService.signUpWithEmail(email, password, name);
+      const { error } = await authService.signUp(email, password, name);
+      
+      if (error) throw new Error(error.message);
       
       toast({
         title: "Account created!",
@@ -45,8 +47,9 @@ export default function Signup() {
   const handleGoogleSignup = async () => {
     setLoading(true);
     try {
-      await authService.signInWithGoogle();
-      // After Google auth, redirect to onboarding
+      const { error } = await authService.signInWithGoogle();
+      if (error) throw new Error(error.message);
+      // After Google auth, redirect to onboarding handled by callback
     } catch (error: any) {
       toast({
         title: "Signup failed",

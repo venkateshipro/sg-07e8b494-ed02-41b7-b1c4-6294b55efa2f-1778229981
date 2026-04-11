@@ -52,12 +52,13 @@ export const authService = {
   },
 
   // Sign up with email and password
-  async signUp(email: string, password: string): Promise<{ user: AuthUser | null; error: AuthError | null }> {
+  async signUp(email: string, password: string, name?: string): Promise<{ user: AuthUser | null; error: AuthError | null }> {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          data: name ? { name, full_name: name } : undefined,
           emailRedirectTo: `${getURL()}auth/confirm-email`
         }
       });
@@ -106,6 +107,28 @@ export const authService = {
       return { 
         user: null, 
         error: { message: "An unexpected error occurred during sign in" } 
+      };
+    }
+  },
+
+  // Sign in with Google
+  async signInWithGoogle(): Promise<{ error: AuthError | null }> {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${getURL()}auth/callback`
+        }
+      });
+
+      if (error) {
+        return { error: { message: error.message, code: error.status?.toString() } };
+      }
+
+      return { error: null };
+    } catch (error) {
+      return { 
+        error: { message: "An unexpected error occurred during Google sign in" } 
       };
     }
   },

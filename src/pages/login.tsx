@@ -22,7 +22,9 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await authService.signInWithEmail(email, password);
+      const { error } = await authService.signIn(email, password);
+      
+      if (error) throw new Error(error.message);
       
       toast({
         title: "Welcome back!",
@@ -44,7 +46,8 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      await authService.signInWithGoogle();
+      const { error } = await authService.signInWithGoogle();
+      if (error) throw new Error(error.message);
     } catch (error: any) {
       toast({
         title: "Login failed",
