@@ -1,6 +1,6 @@
 ---
 title: Subscription & Billing System
-status: todo
+status: done
 priority: high
 type: feature
 tags: [billing, razorpay, subscriptions]
@@ -13,12 +13,12 @@ position: 8
 Razorpay integration for subscription billing. 4 plans: Free, Starter ($9), Pro ($29), Enterprise ($99). Plan management, usage tracking, invoice history.
 
 ## Checklist
-- [ ] Create billing page with current plan display
-- [ ] Show all 4 plan cards with feature comparison table
-- [ ] Create API route: Razorpay checkout for plan upgrade
-- [ ] Create API route: Razorpay webhook handler for subscription events
-- [ ] Handle plan upgrade/downgrade flow
-- [ ] Show cancel subscription option with confirmation modal
-- [ ] Display invoice history table from Razorpay
-- [ ] Enforce plan limits across all features server-side
-- [ ] Auto-reset daily usage counters at midnight
+- [x] Create billing page with current plan display
+- [x] Show all 4 plan cards with feature comparison table
+- [x] Create API route: Razorpay checkout for plan upgrade
+- [x] Create API route: Razorpay webhook handler for subscription events
+- [x] Handle plan upgrade/downgrade flow
+- [x] Show cancel subscription option with confirmation modal
+- [x] Display invoice history table from Razorpay
+- [x] Enforce plan limits across all features server-side
+- [x] Auto-reset daily usage counters at midnight
