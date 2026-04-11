@@ -90,11 +90,12 @@ export default function AdminAIConfigPage() {
       if (fetchError) throw fetchError;
 
       if (data) {
-        setConfig(data);
-        setActiveProvider(data.active_provider);
-        setActiveModel(data.active_model);
-        setFallbackEnabled(data.fallback_enabled);
-        setFallbackProvider(data.fallback_provider || "anthropic");
+        const configData = data as unknown as AIConfig;
+        setConfig(configData);
+        setActiveProvider(configData.active_provider);
+        setActiveModel(configData.active_model);
+        setFallbackEnabled(configData.fallback_enabled);
+        setFallbackProvider(configData.fallback_provider || "anthropic");
         // Don't populate keys from encrypted values for security
       }
 

@@ -70,7 +70,7 @@ export default function AdminPlatformsPage() {
 
       if (fetchError) throw fetchError;
 
-      setPlatforms(data || []);
+      setPlatforms((data as unknown as Platform[]) || []);
       setLoading(false);
     } catch (err) {
       console.error("Error loading platforms:", err);
