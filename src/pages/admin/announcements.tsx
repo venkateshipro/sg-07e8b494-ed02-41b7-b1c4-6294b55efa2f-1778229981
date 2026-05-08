@@ -76,7 +76,7 @@ export default function AdminAnnouncements() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setAnnouncements(data || []);
+      setAnnouncements((data as Announcement[]) || []);
       setLoading(false);
     } catch (error: any) {
       console.error("Error fetching announcements:", error);
