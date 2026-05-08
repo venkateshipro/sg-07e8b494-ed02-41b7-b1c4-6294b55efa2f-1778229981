@@ -20,6 +20,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // 0. Check Master AI Toggle
+    const { data: config } = await supabaseAdmin
+      .from("ai_config")
+      .select("ai_enabled")
+      .single();
+
+    if (config && config.ai_enabled === false) {
+      return res.status(403).json({ 
+        error: "AI features are temporarily unavailable. Please check back soon.",
+        code: "AI_DISABLED"
+      });
+    }
+
     // 1. Get user plan
     const { data: user } = await supabaseAdmin
       .from("users")
@@ -77,11 +90,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const aiRequest: AIRequest = { type, input };
     const result = await callAI(aiRequest);
 
+    // 5. Log usage to ai_usage_logs table
+    const featureName = type === "keyword_analysis" ? "keyword" : type === "seo_optimization" ? "seo" : "competitor";
+    await supabaseAdmin.from("ai_usage_logs").insert([{
+      user_id: userId,
+      provider: result.provider || "unknown",
+      model: result.model || "unknown",
+      feature: featureName,
+      tokens_used: 0,
+      success: result.success,
+      fallback_triggered: result.fallback_triggered || false
+    }]);
+
     if (!result.success) {
       return res.status(500).json({ error: result.error });
     }
 
-    // 5. Increment usage
+    // 6. Increment plan usage limits
     if (usage) {
       const updateData = column === "keyword_searches" 
         ? { keyword_searches: used + 1 }

@@ -1,141 +1,88 @@
-// DeepSeek AI Adapter (OpenAI-compatible)
+import type { AIRequest, AIResponse } from "./index";
 
-interface DeepSeekMessage {
-  role: "user" | "assistant" | "system";
-  content: string;
-}
+const SYSTEM_PROMPTS = {
+  keyword_analysis: `You are a YouTube SEO expert. Analyze the given keyword and return related keywords, competition level (low/medium/high), and keyword score (0-100). Return JSON only.`,
+  seo_optimization: `You are a YouTube SEO optimizer. Given a video's current title, description, and tags, suggest optimized versions that will improve discoverability and ranking. Return JSON only.`,
+  competitor_insights: `You are a YouTube growth analyst. Analyze the competitor channel data and provide actionable insights for channel growth. Return JSON only.`,
+};
 
-interface DeepSeekResponse {
-  id: string;
-  choices: Array<{
-    message: {
-      role: string;
-      content: string;
-    };
-    finish_reason: string;
-  }>;
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
+export const deepseekAdapter = {
+  async call(request: AIRequest, model: string, apiKey: string): Promise<AIResponse> {
+    try {
+      const response = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: model || "deepseek-chat",
+          messages: [
+            { role: "system", content: SYSTEM_PROMPTS[request.type] },
+            { role: "user", content: request.input },
+          ],
+          temperature: 0.7,
+          response_format: { type: "json_object" }
+        }),
+      });
 
-export async function callDeepSeek(
-  prompt: string,
-  model: string = "deepseek-chat",
-  apiKey: string
-): Promise<string> {
-  try {
-    const messages: DeepSeekMessage[] = [
-      {
-        role: "user",
-        content: prompt,
-      },
-    ];
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.message || "DeepSeek API request failed");
+      }
 
-    const response = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content;
+      
+      if (!content) {
+        return { success: false, error: "No response from DeepSeek" };
+      }
+
+      let parsedData;
+      try {
+        parsedData = JSON.parse(content);
+      } catch (e) {
+        // Deepseek sometimes wraps JSON in markdown blocks
+        const match = content.match(/```json\n([\s\S]*)\n```/);
+        if (match) {
+          parsedData = JSON.parse(match[1]);
+        } else {
+          throw e;
+        }
+      }
+
+      return {
+        success: true,
+        data: parsedData,
+        provider: "deepseek",
         model,
-        messages,
-        max_tokens: 2000,
-        temperature: 0.7,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error?.message || "DeepSeek API request failed");
+      };
+    } catch (error) {
+      console.error("DeepSeek adapter error:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "DeepSeek request failed",
+      };
     }
+  },
 
-    const data: DeepSeekResponse = await response.json();
-    
-    if (!data.choices || data.choices.length === 0) {
-      throw new Error("No response from DeepSeek");
+  async testConnection(apiKey: string): Promise<boolean> {
+    try {
+      const response = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [{ role: "user", content: "Test" }],
+          max_tokens: 5,
+        }),
+      });
+      return response.ok;
+    } catch (error) {
+      return false;
     }
-
-    return data.choices[0].message.content;
-  } catch (error) {
-    console.error("DeepSeek API error:", error);
-    throw error;
-  }
-}
-
-export async function generateKeywordSuggestions(
-  keyword: string,
-  apiKey: string,
-  model: string = "deepseek-chat"
-): Promise<string[]> {
-  const prompt = `Generate 10 related YouTube keyword suggestions for: "${keyword}". 
-Return only the keywords, one per line, without numbering or extra text.`;
-
-  const response = await callDeepSeek(prompt, model, apiKey);
-  return response.split("\n").filter((k) => k.trim().length > 0);
-}
-
-export async function optimizeSEO(
-  videoTitle: string,
-  videoDescription: string,
-  apiKey: string,
-  model: string = "deepseek-chat"
-): Promise<{
-  title: string;
-  description: string;
-  tags: string[];
-}> {
-  const prompt = `You are a YouTube SEO expert. Optimize this video:
-
-Original Title: ${videoTitle}
-Original Description: ${videoDescription}
-
-Provide:
-1. An optimized title (60 chars max)
-2. An optimized description (150-200 chars)
-3. 10 relevant tags
-
-Format your response as JSON:
-{
-  "title": "...",
-  "description": "...",
-  "tags": ["...", "..."]
-}`;
-
-  const response = await callDeepSeek(prompt, model, apiKey);
-  
-  try {
-    const parsed = JSON.parse(response);
-    return {
-      title: parsed.title || videoTitle,
-      description: parsed.description || videoDescription,
-      tags: parsed.tags || [],
-    };
-  } catch {
-    return {
-      title: videoTitle,
-      description: videoDescription,
-      tags: [],
-    };
-  }
-}
-
-export async function analyzeCompetitor(
-  channelName: string,
-  apiKey: string,
-  model: string = "deepseek-chat"
-): Promise<string> {
-  const prompt = `Analyze this YouTube channel as a competitor: "${channelName}". 
-Provide insights on:
-1. Content strategy
-2. Common video topics
-3. Engagement tactics
-4. Growth opportunities
-
-Keep the analysis concise (200-300 words).`;
-
-  return callDeepSeek(prompt, model, apiKey);
-}
+  },
+};
