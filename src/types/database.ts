@@ -19,10 +19,10 @@ export interface Plan {
   keyword_searches_limit: number;
   seo_optimizations_limit: number;
   competitor_analysis_limit: number;
-  videos_analyzed_limit: number;
+  platforms_limit: number;
   team_members_limit: number;
   priority_support: boolean;
-  features: string[];
+  created_at?: string;
 }
 
 export interface UsageTracking {
