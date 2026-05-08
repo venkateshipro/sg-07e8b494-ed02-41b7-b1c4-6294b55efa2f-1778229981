@@ -44,7 +44,7 @@ interface Announcement {
   title: string;
   message: string;
   type: "info" | "warning" | "success";
-  is_active: boolean;
+  active: boolean;
   created_at: string;
 }
 
@@ -102,7 +102,7 @@ export default function AdminAnnouncements() {
             title,
             message,
             type,
-            is_active: isActive,
+            active: isActive,
           }
         ]);
 
@@ -136,7 +136,7 @@ export default function AdminAnnouncements() {
     try {
       const { error } = await supabase
         .from("announcements")
-        .update({ is_active: !currentStatus })
+        .update({ active: !currentStatus })
         .eq("id", id);
 
       if (error) throw error;
@@ -147,7 +147,7 @@ export default function AdminAnnouncements() {
       });
 
       setAnnouncements(announcements.map(a => 
-        a.id === id ? { ...a, is_active: !currentStatus } : a
+        a.id === id ? { ...a, active: !currentStatus } : a
       ));
     } catch (error: any) {
       toast({
@@ -329,8 +329,8 @@ export default function AdminAnnouncements() {
                               </TableCell>
                               <TableCell>
                                 <Switch 
-                                  checked={announcement.is_active}
-                                  onCheckedChange={() => handleToggleStatus(announcement.id, announcement.is_active)}
+                                  checked={announcement.active}
+                                  onCheckedChange={() => handleToggleStatus(announcement.id, announcement.active)}
                                 />
                               </TableCell>
                               <TableCell className="text-right">
