@@ -74,11 +74,11 @@ export default function AIConfiguration() {
       if (error) throw error;
 
       if (data) {
-        setConfig(data);
-        setActiveProvider(data.active_provider);
+        setConfig(data as AIConfig);
+        setActiveProvider(data.active_provider as "openai" | "anthropic");
         setActiveModel(data.active_model);
         setFallbackEnabled(data.fallback_enabled);
-        setFallbackProvider(data.fallback_provider);
+        setFallbackProvider(data.fallback_provider as "openai" | "anthropic" | null);
         // Don't show encrypted keys in plaintext - just indicate they exist
         setOpenaiKey(data.openai_key_encrypted ? "••••••••••••••••" : "");
         setAnthropicKey(data.anthropic_key_encrypted ? "••••••••••••••••" : "");
