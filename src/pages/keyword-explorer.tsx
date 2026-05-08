@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { PlatformSelector } from "@/components/PlatformSelector";
 import { EmptyState } from "@/components/EmptyState";
 import { KeywordResultSkeleton } from "@/components/LoadingSkeletons";
 import { ErrorBoundary, ErrorFallback } from "@/components/ErrorBoundary";
@@ -18,7 +17,7 @@ import { planService } from "@/services/planService";
 import { usageService } from "@/services/usageService";
 import { SEO } from "@/components/SEO";
 import { useToast } from "@/hooks/use-toast";
-import type { PlatformConfig, Plan } from "@/types/database";
+import type { Plan } from "@/types/database";
 
 interface KeywordResult {
   keyword: string;
@@ -35,8 +34,6 @@ interface KeywordResult {
 export default function KeywordExplorerPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [platforms, setPlatforms] = useState<PlatformConfig[]>([]);
-  const [selectedPlatform, setSelectedPlatform] = useState("youtube");
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null);
   const [usage, setUsage] = useState(0);
   const [keyword, setKeyword] = useState("");
@@ -48,8 +45,6 @@ export default function KeywordExplorerPage() {
   const loadInitialData = async () => {
     try {
       setDataLoadError(null);
-      const allPlatforms = await platformService.getAllPlatforms();
-      setPlatforms(allPlatforms);
 
       if (user) {
         const plan = await planService.getPlanBySlug(user.plan);
@@ -192,12 +187,6 @@ export default function KeywordExplorerPage() {
 
             {!dataLoadError && (
               <>
-                <PlatformSelector 
-                  platforms={platforms}
-                  selected={selectedPlatform}
-                  onSelect={setSelectedPlatform}
-                />
-
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">

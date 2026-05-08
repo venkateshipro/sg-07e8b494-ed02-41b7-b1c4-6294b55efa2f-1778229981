@@ -13,7 +13,7 @@ export const planService = {
       return [];
     }
 
-    return data || [];
+    return (data || []) as Plan[];
   },
 
   async getPlanBySlug(slug: string): Promise<Plan | null> {
@@ -28,7 +28,7 @@ export const planService = {
       return null;
     }
 
-    return data;
+    return data as Plan;
   },
 
   async getUserPlanLimits(userId: string): Promise<Plan | null> {

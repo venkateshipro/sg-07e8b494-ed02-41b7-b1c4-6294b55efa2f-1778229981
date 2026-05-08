@@ -23,7 +23,6 @@ export function PlanCard({ plan, currentPlan, onSelect, loading }: PlanCardProps
       ? `${plan.competitor_analysis_limit === -1 ? "Unlimited" : plan.competitor_analysis_limit} competitor analyses/day`
       : "No competitor analysis",
     `${plan.team_members_limit} team member${plan.team_members_limit !== 1 ? "s" : ""}`,
-    `${plan.platforms_limit === -1 ? "All" : plan.platforms_limit} platform${plan.platforms_limit !== 1 ? "s" : ""}`,
     plan.priority_support ? "Priority support" : "Standard support",
   ];
 

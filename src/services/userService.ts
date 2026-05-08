@@ -14,7 +14,7 @@ export const userService = {
       return null;
     }
 
-    return data;
+    return data as User;
   },
 
   async getCurrentUser(): Promise<User | null> {
@@ -32,7 +32,7 @@ export const userService = {
       return null;
     }
 
-    return data;
+    return data as User;
   },
 
   async updateUser(userId: string, updates: UserUpdate): Promise<User | null> {
@@ -48,7 +48,7 @@ export const userService = {
       return null;
     }
 
-    return data;
+    return data as User;
   },
 
   async updateLastLogin(userId: string): Promise<void> {

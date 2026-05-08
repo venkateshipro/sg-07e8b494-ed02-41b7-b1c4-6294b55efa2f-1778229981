@@ -14,7 +14,7 @@ export const announcementService = {
       return [];
     }
 
-    return data || [];
+    return (data || []) as Announcement[];
   },
 
   async getAllAnnouncements(): Promise<Announcement[]> {
@@ -28,7 +28,7 @@ export const announcementService = {
       return [];
     }
 
-    return data || [];
+    return (data || []) as Announcement[];
   },
 
   async createAnnouncement(
@@ -47,7 +47,7 @@ export const announcementService = {
       return null;
     }
 
-    return data;
+    return data as Announcement;
   },
 
   async toggleActive(id: string, active: boolean): Promise<boolean> {
