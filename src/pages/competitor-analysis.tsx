@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Target, AlertCircle, Lock, TrendingUp, Users, BarChart3 } from "lucide-react";
+import { Search, Target, AlertCircle, Lock, TrendingUp, Users, BarChart3, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { platformService } from "@/services/platformService";
 import { planService } from "@/services/planService";
@@ -53,6 +53,7 @@ export default function CompetitorAnalysisPage() {
   const [comparison, setComparison] = useState<ComparisonData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiDisabled, setAiDisabled] = useState(false);
   const [dataLoadError, setDataLoadError] = useState<Error | null>(null);
 
   const loadInitialData = async () => {
@@ -99,6 +100,15 @@ export default function CompetitorAnalysisPage() {
           userId: user.id
         })
       });
+
+      if (response.status === 403) {
+        const errData = await response.json();
+        if (errData.code === "AI_DISABLED") {
+          setAiDisabled(true);
+          setLoading(false);
+          return;
+        }
+      }
 
       const data = await response.json();
 
@@ -201,6 +211,15 @@ export default function CompetitorAnalysisPage() {
 
             {!dataLoadError && (
               <>
+                {aiDisabled && (
+                  <Alert className="bg-blue-50/50 border-blue-200 mb-6">
+                    <Info className="h-4 w-4 text-blue-500" />
+                    <AlertDescription className="text-blue-700">
+                      AI features are temporarily unavailable. Please check back soon.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 {!canUseFeature ? (
                   <Card className="border-primary/50">
                     <CardHeader>

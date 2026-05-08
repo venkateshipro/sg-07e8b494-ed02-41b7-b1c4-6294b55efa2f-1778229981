@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Sparkles, Copy, Check, AlertCircle, Lock, Zap } from "lucide-react";
+import { Sparkles, Copy, Check, AlertCircle, Lock, Zap, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { platformService } from "@/services/platformService";
 import { planService } from "@/services/planService";
@@ -44,6 +44,7 @@ export default function SEOOptimizerPage() {
   const [optimizedResult, setOptimizedResult] = useState<OptimizationResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiDisabled, setAiDisabled] = useState(false);
   const [copiedFields, setCopiedFields] = useState<Record<string, boolean>>({});
   const [dataLoadError, setDataLoadError] = useState<Error | null>(null);
 
@@ -124,6 +125,15 @@ export default function SEOOptimizerPage() {
           userId: user.id,
         }),
       });
+
+      if (response.status === 403) {
+        const errData = await response.json();
+        if (errData.code === "AI_DISABLED") {
+          setAiDisabled(true);
+          setLoading(false);
+          return;
+        }
+      }
 
       const data = await response.json();
 
@@ -215,6 +225,15 @@ export default function SEOOptimizerPage() {
 
             {!dataLoadError && (
               <>
+                {aiDisabled && (
+                  <Alert className="bg-blue-50/50 border-blue-200 mb-6">
+                    <Info className="h-4 w-4 text-blue-500" />
+                    <AlertDescription className="text-blue-700">
+                      AI features are temporarily unavailable. Please check back soon.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 {!canUseFeature ? (
                   <Card className="border-primary/50">
                     <CardHeader>

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, CheckCircle2, XCircle, Loader2, Info } from "lucide-react";
+import { Sparkles, CheckCircle2, XCircle, Loader2, Info, BarChart3 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 
 interface AIConfig {
@@ -71,9 +71,65 @@ export default function AIConfiguration() {
   const [anthropicTestResult, setAnthropicTestResult] = useState<"success" | "error" | null>(null);
   const [deepseekTestResult, setDeepseekTestResult] = useState<"success" | "error" | null>(null);
 
+  const [stats, setStats] = useState({
+    today: 0,
+    thisMonth: 0,
+    successRate: 0,
+    topProvider: "N/A",
+    topFeature: "N/A"
+  });
+
   useEffect(() => {
     fetchConfig();
+    fetchUsageStats();
   }, []);
+
+  async function fetchUsageStats() {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+      const { data: monthLogs, error: monthError } = await supabase
+        .from("ai_usage_logs")
+        .select("*")
+        .gte("created_at", firstOfMonth.toISOString());
+
+      if (monthError) throw monthError;
+
+      if (!monthLogs || monthLogs.length === 0) {
+        return;
+      }
+
+      const todayLogs = monthLogs.filter((log: any) => new Date(log.created_at) >= today);
+      const successfulLogs = monthLogs.filter((log: any) => log.success);
+      
+      const successRate = Math.round((successfulLogs.length / monthLogs.length) * 100);
+
+      const providerCounts = monthLogs.reduce((acc: any, log: any) => {
+        acc[log.provider] = (acc[log.provider] || 0) + 1;
+        return acc;
+      }, {});
+      const topProvider = Object.keys(providerCounts).sort((a, b) => providerCounts[b] - providerCounts[a])[0] || "N/A";
+
+      const featureCounts = monthLogs.reduce((acc: any, log: any) => {
+        acc[log.feature] = (acc[log.feature] || 0) + 1;
+        return acc;
+      }, {});
+      const topFeature = Object.keys(featureCounts).sort((a, b) => featureCounts[b] - featureCounts[a])[0] || "N/A";
+
+      setStats({
+        today: todayLogs.length,
+        thisMonth: monthLogs.length,
+        successRate,
+        topProvider,
+        topFeature
+      });
+    } catch (err) {
+      console.error("Error fetching stats:", err);
+    }
+  }
 
   async function fetchConfig() {
     try {
@@ -357,6 +413,43 @@ export default function AIConfiguration() {
                     </AlertDescription>
                   </Alert>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* AI Usage Stats */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  AI Usage Stats
+                </CardTitle>
+                <CardDescription>
+                  Overview of AI API calls across the platform
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Calls Today</p>
+                    <p className="text-2xl font-bold">{stats.today}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">This Month</p>
+                    <p className="text-2xl font-bold">{stats.thisMonth}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Success Rate</p>
+                    <p className="text-2xl font-bold">{stats.successRate}%</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Top Provider</p>
+                    <p className="text-2xl font-bold capitalize">{stats.topProvider}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Top Feature</p>
+                    <p className="text-2xl font-bold capitalize">{stats.topFeature}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
