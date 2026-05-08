@@ -13,6 +13,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Settings, LogOut, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 interface UserProfile {
   id: string;
@@ -20,6 +22,7 @@ interface UserProfile {
   email: string;
   avatar_url?: string;
   plan: string;
+  role?: string;
 }
 
 export function UserProfileDropdown() {
@@ -39,7 +42,7 @@ export function UserProfileDropdown() {
 
       const { data: userData, error } = await supabase
         .from("users")
-        .select("id, name, email, avatar_url, plan")
+        .select("id, name, email, avatar_url, plan, role")
         .eq("id", session.user.id)
         .single();
 
@@ -86,42 +89,49 @@ export function UserProfileDropdown() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="w-full outline-none">
-        <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors cursor-pointer">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={user.avatar_url} />
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              {user.name?.charAt(0).toUpperCase() || "U"}
-            </AvatarFallback>
-          </Avatar>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="w-full justify-start gap-3 h-auto py-3">
+          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold">
+            {user?.name?.charAt(0).toUpperCase() || "U"}
+          </div>
           <div className="flex-1 text-left overflow-hidden">
-            <p className="text-sm font-medium truncate">{user.name}</p>
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            <p className="text-sm font-medium truncate">{user?.name || "User"}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
           </div>
-          <Badge variant="outline" className="capitalize text-xs">
-            {user.plan}
-          </Badge>
-        </div>
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium">{user.name}</p>
-            <p className="text-xs text-muted-foreground">{user.email}</p>
-            <Badge variant="outline" className="capitalize text-xs w-fit mt-1">
-              {user.plan} Plan
-            </Badge>
+      <DropdownMenuContent className="w-64" align="end">
+        <div className="p-3 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-lg">
+              {user?.name?.charAt(0).toUpperCase() || "U"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold truncate">{user?.name || "User"}</p>
+              <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+              {user?.role === "admin" ? (
+                <Badge variant="default" className="mt-2">
+                  Admin
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="mt-2 capitalize">
+                  {user?.plan || "Free"}
+                </Badge>
+              )}
+            </div>
           </div>
-        </DropdownMenuLabel>
+        </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer">
-          <Settings className="mr-2 h-4 w-4" />
-          Settings
+        <DropdownMenuItem asChild>
+          <Link href="/settings" className="cursor-pointer">
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
+        <DropdownMenuItem onClick={handleSignOut} disabled={loading} className="cursor-pointer text-destructive focus:text-destructive">
           <LogOut className="mr-2 h-4 w-4" />
-          Sign Out
+          {loading ? "Signing out..." : "Sign Out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
