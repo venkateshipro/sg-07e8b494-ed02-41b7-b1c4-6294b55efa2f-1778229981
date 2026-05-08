@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/collapsible";
 import { PlatformBadge } from "./PlatformBadge";
 import { useState } from "react";
+import { UserProfileDropdown } from "@/components/UserProfileDropdown";
 
 interface DashboardSidebarProps {
   user?: {
@@ -168,6 +169,11 @@ export function DashboardSidebar({ user, platforms = [] }: DashboardSidebarProps
           </div>
         </div>
       )}
+
+      {/* User Profile Dropdown */}
+      <div className="border-t p-3">
+        <UserProfileDropdown />
+      </div>
     </div>
   );
 }

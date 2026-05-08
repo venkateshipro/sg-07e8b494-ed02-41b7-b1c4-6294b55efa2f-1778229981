@@ -15,6 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { UserProfileDropdown } from "@/components/UserProfileDropdown";
 
 interface AdminSidebarProps {
   user?: {
@@ -98,6 +100,11 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
           </Button>
         </div>
       )}
+
+      {/* User Profile Dropdown */}
+      <div className="border-t p-3">
+        <UserProfileDropdown />
+      </div>
     </div>
   );
 }
