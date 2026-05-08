@@ -54,6 +54,50 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_usage_logs: {
+        Row: {
+          created_at: string | null
+          fallback_triggered: boolean | null
+          feature: string
+          id: string
+          model: string
+          provider: string
+          success: boolean
+          tokens_used: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          fallback_triggered?: boolean | null
+          feature: string
+          id?: string
+          model: string
+          provider: string
+          success: boolean
+          tokens_used?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          fallback_triggered?: boolean | null
+          feature?: string
+          id?: string
+          model?: string
+          provider?: string
+          success?: boolean
+          tokens_used?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
           active: boolean | null
