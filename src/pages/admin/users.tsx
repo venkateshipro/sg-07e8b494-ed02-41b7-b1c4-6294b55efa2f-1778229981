@@ -62,7 +62,7 @@ interface UserDetail extends User {
     date: string;
     keyword_searches: number;
     seo_optimizations: number;
-    competitor_analyses: number;
+    competitor_analysis: number;
   }>;
   platforms?: Array<{
     platform: string;
@@ -160,7 +160,7 @@ export default function AdminUsers() {
       // Fetch usage stats
       const { data: usage } = await supabase
         .from("usage_tracking")
-        .select("date, keyword_searches, seo_optimizations, competitor_analyses")
+        .select("date, keyword_searches, seo_optimizations, competitor_analysis")
         .eq("user_id", user.id)
         .order("date", { ascending: false })
         .limit(30);
@@ -580,7 +580,7 @@ export default function AdminUsers() {
                             <div className="p-3 border rounded-lg">
                               <p className="text-xs text-muted-foreground mb-1">Competitor Analyses</p>
                               <p className="text-2xl font-bold">
-                                {selectedUser.usage.reduce((sum, u) => sum + (u.competitor_analyses || 0), 0)}
+                                {selectedUser.usage.reduce((sum, u) => sum + (u.competitor_analysis || 0), 0)}
                               </p>
                             </div>
                           </div>

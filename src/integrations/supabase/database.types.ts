@@ -329,6 +329,7 @@ export type Database = {
           plan: string
           plan_expiry: string | null
           role: string
+          status: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -340,6 +341,7 @@ export type Database = {
           plan?: string
           plan_expiry?: string | null
           role?: string
+          status?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -351,6 +353,7 @@ export type Database = {
           plan?: string
           plan_expiry?: string | null
           role?: string
+          status?: string | null
         }
         Relationships: []
       }
