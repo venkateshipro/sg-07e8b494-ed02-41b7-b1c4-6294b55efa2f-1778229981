@@ -1,34 +1,20 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { MobileNav } from "@/components/MobileNav";
 import { 
-  Sparkles, Search, Target, TrendingUp, Users, Eye, Video,
-  Youtube, Instagram, Facebook, Linkedin, Twitter, CheckCircle2,
-  ArrowRight, Zap, Shield, Globe, MessageSquare
+  Sparkles, Search, Target, CheckCircle2
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
-import { PlatformBadge } from "@/components/PlatformBadge";
-
-type PlatformStatus = "live" | "coming_soon";
 
 const features = [
   { title: "AI Keyword Explorer", description: "Discover high-volume, low-competition keywords before your competitors do.", icon: Search },
   { title: "SEO Optimization", description: "Generate optimized titles, descriptions, and tags tailored to your niche.", icon: Sparkles },
   { title: "Competitor Analysis", description: "Reverse-engineer successful channels to find what works in your industry.", icon: Target }
-];
-
-const platforms: Array<{ name: string; icon: any; status: PlatformStatus; date: string }> = [
-  { name: "YouTube", icon: Youtube, status: "live", date: "Available Now" },
-  { name: "Instagram", icon: Instagram, status: "coming_soon", date: "Q3 2026" },
-  { name: "TikTok", icon: Video, status: "coming_soon", date: "Q3 2026" },
-  { name: "X (Twitter)", icon: Twitter, status: "coming_soon", date: "Q4 2026" },
-  { name: "LinkedIn", icon: Linkedin, status: "coming_soon", date: "Q4 2026" },
-  { name: "Facebook", icon: Facebook, status: "coming_soon", date: "Q4 2026" }
 ];
 
 const plans = [
@@ -41,7 +27,7 @@ const plans = [
 const faqs = [
   { question: "How does the AI SEO optimization work?", answer: "Our AI analyzes top-performing content in your niche and generates optimized titles, descriptions, and tags designed to rank higher in YouTube's algorithm." },
   { question: "Can I connect multiple YouTube channels?", answer: "Yes, depending on your plan. Starter allows 3 channels, Pro allows 10, and Enterprise offers unlimited channel connections." },
-  { question: "When will other platforms be available?", answer: "We are actively developing support for Instagram and TikTok (expected Q3 2026), followed by X, LinkedIn, and Facebook in Q4 2026." },
+  { question: "Is my data secure?", answer: "Absolutely. We use industry-standard encryption and security practices to protect your YouTube channel data and ensure your privacy." },
   { question: "Do you offer a free trial?", answer: "Yes, all paid plans come with a 14-day free trial. No credit card is required to start." }
 ];
 
@@ -49,8 +35,8 @@ export default function Home() {
   return (
     <>
       <SEO 
-        title="FaGrow - Multi-Platform Social Media SEO & Growth SaaS"
-        description="Grow your YouTube channel with AI-powered keyword research, SEO optimization, and competitor analysis. More platforms coming soon: Instagram, TikTok, X, LinkedIn, Facebook."
+        title="FaGrow - YouTube SEO & Growth Tool"
+        description="Grow your YouTube channel with AI-powered keyword research, SEO optimization, and competitor analysis."
         image="/og-image.png"
         url="/"
       />
@@ -71,9 +57,6 @@ export default function Home() {
               <div className="hidden md:flex items-center gap-6">
                 <Link href="#features" className="text-sm font-medium hover:text-primary transition-colors py-2 px-1">
                   Features
-                </Link>
-                <Link href="#platforms" className="text-sm font-medium hover:text-primary transition-colors py-2 px-1">
-                  Platforms
                 </Link>
                 <Link href="#pricing" className="text-sm font-medium hover:text-primary transition-colors py-2 px-1">
                   Pricing
@@ -104,19 +87,19 @@ export default function Home() {
         </nav>
 
         {/* Hero Section */}
-        <section className="relative overflow-hidden">
+        <section className="relative overflow-hidden py-20 md:py-32">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center space-y-6">
               <Badge variant="outline" className="mb-4">
-                AI-Powered Social Media Growth
+                AI-Powered YouTube Growth
               </Badge>
               <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-                Grow Your Audience with{" "}
+                Grow Your YouTube Channel with{" "}
                 <span className="text-primary">AI-Powered SEO</span>
               </h1>
               <p className="text-xl text-muted-foreground">
                 Optimize your content, outrank competitors, and reach millions with intelligent keyword research and
-                AI-driven insights.
+                AI-driven insights for YouTube creators.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
                 <Link href="/signup">
@@ -139,9 +122,9 @@ export default function Home() {
         <section id="features" className="py-20 bg-muted/30">
           <div className="container">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Powerful Features for Growth</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Powerful Features for YouTube Growth</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Everything you need to optimize your content and grow your audience across social platforms.
+                Everything you need to optimize your YouTube content and grow your audience.
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -160,42 +143,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Platform Roadmap */}
-        <section id="platforms" className="py-20">
-          <div className="container">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Multi-Platform Support</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                We're starting with YouTube and expanding to all major social platforms throughout 2026.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {platforms.map((platform, idx) => (
-                <Card key={idx}>
-                  <CardContent className="p-6 flex flex-col items-center text-center gap-3">
-                    <div
-                      className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        platform.status === "live" ? "bg-accent/10" : "bg-muted"
-                      }`}
-                    >
-                      <platform.icon
-                        className={`h-6 w-6 ${platform.status === "live" ? "text-accent" : "text-muted-foreground"}`}
-                      />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">{platform.name}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{platform.date}</p>
-                    </div>
-                    <PlatformBadge status={platform.status} />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Pricing */}
-        <section id="pricing" className="py-20 bg-muted/30">
+        <section id="pricing" className="py-20">
           <div className="container">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
@@ -240,7 +189,7 @@ export default function Home() {
         </section>
 
         {/* FAQ */}
-        <section id="faq" className="py-20">
+        <section id="faq" className="py-20 bg-muted/30">
           <div className="container max-w-3xl">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Frequently Asked Questions</h2>
@@ -274,11 +223,6 @@ export default function Home() {
                   <li>
                     <Link href="#pricing" className="text-sm text-muted-foreground hover:text-foreground">
                       Pricing
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="#platforms" className="text-sm text-muted-foreground hover:text-foreground">
-                      Platform Roadmap
                     </Link>
                   </li>
                 </ul>

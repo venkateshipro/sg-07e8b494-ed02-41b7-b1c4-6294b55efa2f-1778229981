@@ -4,28 +4,25 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { StatsCard } from "@/components/StatsCard";
 import { UsageMeter } from "@/components/UsageMeter";
 import { VideoCard } from "@/components/VideoCard";
-import { PlatformSelector } from "@/components/PlatformSelector";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { EmptyState } from "@/components/EmptyState";
 import { DashboardSkeleton } from "@/components/LoadingSkeletons";
 import { ErrorBoundary, ErrorFallback } from "@/components/ErrorBoundary";
 import { Users, Eye, Video, TrendingUp, Search, Sparkles, Target, Youtube } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { platformService } from "@/services/platformService";
 import { planService } from "@/services/planService";
 import { usageService } from "@/services/usageService";
 import { announcementService } from "@/services/announcementService";
-import type { PlatformConfig, Announcement, Plan } from "@/types/database";
+import type { Announcement, Plan } from "@/types/database";
 import { SEO } from "@/components/SEO";
 import { useRouter } from "next/router";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const [platforms, setPlatforms] = useState<PlatformConfig[]>([]);
-  const [selectedPlatform, setSelectedPlatform] = useState("youtube");
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null);
   const [usage, setUsage] = useState({ keywordSearches: 0, seoOptimizations: 0, competitorAnalysis: 0 });
@@ -38,9 +35,6 @@ export default function DashboardPage() {
     try {
       setLoading(true);
       setError(null);
-      
-      const allPlatforms = await platformService.getAllPlatforms();
-      setPlatforms(allPlatforms);
 
       const announcements = await announcementService.getActiveAnnouncements();
       if (announcements.length > 0) {
@@ -60,9 +54,14 @@ export default function DashboardPage() {
           });
         }
 
-        const connections = await platformService.getUserConnectedPlatforms(user.id);
-        const youtubeConnection = connections.find(c => c.platform === "youtube");
-        setHasYouTubeConnection(!!youtubeConnection);
+        // Check for YouTube connection
+        const { data: connections } = await supabase
+          .from("connected_platforms")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("platform", "youtube");
+
+        setHasYouTubeConnection(connections && connections.length > 0);
       }
       
       setLoading(false);
@@ -102,18 +101,14 @@ export default function DashboardPage() {
     <ProtectedRoute>
       <SEO 
         title="Dashboard - FaGrow"
-        description="Manage your social media growth and track your performance"
+        description="Manage your YouTube growth and track your performance"
       />
       <ErrorBoundary onReset={loadData}>
         <DashboardLayout>
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div>
               <h1 className="text-3xl font-bold">Dashboard</h1>
-              <PlatformSelector
-                platforms={platforms}
-                selected={selectedPlatform}
-                onSelect={setSelectedPlatform}
-              />
+              <p className="text-muted-foreground mt-1">YouTube Analytics & Insights</p>
             </div>
 
             {announcement && !dismissedAnnouncement && (
@@ -192,9 +187,7 @@ export default function DashboardPage() {
                     title="Connect Your YouTube Channel"
                     description="Get started by connecting your YouTube channel to unlock powerful analytics, keyword research, and SEO optimization tools."
                     actionLabel="Connect YouTube"
-                    onAction={() => router.push("/onboarding?step=3")}
-                    secondaryActionLabel="Learn More"
-                    onSecondaryAction={() => router.push("/#features")}
+                    onAction={() => router.push("/onboarding")}
                   />
                 ) : (
                   <>

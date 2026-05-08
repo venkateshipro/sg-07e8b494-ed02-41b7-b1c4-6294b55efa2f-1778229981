@@ -3,17 +3,14 @@ import { useRouter } from "next/router";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, Youtube, Instagram, MessageSquare, Linkedin, Facebook, CheckCircle2 } from "lucide-react";
-import { PlatformBadge } from "@/components/PlatformBadge";
+import { Sparkles, Youtube, CheckCircle2 } from "lucide-react";
 import { PlanCard } from "@/components/PlanCard";
-import { platformService } from "@/services/platformService";
 import { planService } from "@/services/planService";
-import type { PlatformConfig, Plan } from "@/types/database";
+import type { Plan } from "@/types/database";
 import { SEO } from "@/components/SEO";
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
-  const [platforms, setPlatforms] = useState<PlatformConfig[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(false);
   const { user, refreshUser } = useAuth();
@@ -25,18 +22,13 @@ export default function OnboardingPage() {
       return;
     }
 
-    // Load platforms and plans
-    platformService.getAllPlatforms().then(setPlatforms);
+    // Load plans
     planService.getAllPlans().then(setPlans);
   }, [user, router]);
 
-  const handlePlatformSelect = () => {
-    setStep(3);
-  };
-
   const handleYouTubeConnect = () => {
     // YouTube OAuth will be implemented in YouTube integration task
-    setStep(4);
+    setStep(3);
   };
 
   const handlePlanSelect = async (planSlug: string) => {
@@ -47,26 +39,17 @@ export default function OnboardingPage() {
     router.push("/dashboard");
   };
 
-  const platformIcons: Record<string, typeof Youtube> = {
-    youtube: Youtube,
-    instagram: Instagram,
-    tiktok: MessageSquare,
-    x: MessageSquare,
-    linkedin: Linkedin,
-    facebook: Facebook,
-  };
-
   return (
     <>
       <SEO 
         title="Welcome to FaGrow"
-        description="Complete your onboarding to start growing your social media"
+        description="Complete your onboarding to start growing your YouTube channel"
       />
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-4xl">
           {/* Progress indicator */}
           <div className="flex items-center justify-center mb-8 space-x-2">
-            {[1, 2, 3, 4].map((s) => (
+            {[1, 2, 3].map((s) => (
               <div
                 key={s}
                 className={`h-2 rounded-full transition-all ${
@@ -91,12 +74,12 @@ export default function OnboardingPage() {
                 </div>
                 <CardTitle className="text-3xl">Welcome to FaGrow</CardTitle>
                 <CardDescription className="text-lg">
-                  Your AI-powered social media growth platform
+                  Your AI-powered YouTube growth platform
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground max-w-lg mx-auto">
-                  Let's get you set up in just a few steps. We'll help you connect your platforms,
+                  Let's get you set up in just a few steps. We'll help you connect your YouTube channel,
                   optimize your content with AI, and start growing your audience.
                 </p>
               </CardContent>
@@ -108,47 +91,8 @@ export default function OnboardingPage() {
             </Card>
           )}
 
-          {/* Step 2: Platform Selection */}
+          {/* Step 2: Connect YouTube */}
           {step === 2 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl">Choose Your Platform</CardTitle>
-                <CardDescription>
-                  Select the platform you want to grow. More platforms coming soon!
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {platforms.map((platform) => {
-                    const Icon = platformIcons[platform.platform_name.toLowerCase()] || MessageSquare;
-                    const isLive = platform.status === "live";
-                    
-                    return (
-                      <button
-                        key={platform.id}
-                        onClick={() => isLive && handlePlatformSelect()}
-                        disabled={!isLive}
-                        className={`p-6 rounded-lg border-2 transition-all ${
-                          isLive
-                            ? "border-border hover:border-primary hover:bg-card cursor-pointer"
-                            : "border-border bg-muted/50 cursor-not-allowed opacity-60"
-                        }`}
-                      >
-                        <div className="flex flex-col items-center space-y-3">
-                          <Icon className="h-10 w-10" />
-                          <span className="font-medium capitalize">{platform.platform_name}</span>
-                          <PlatformBadge status={platform.status as "live" | "coming_soon"} />
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 3: Connect YouTube */}
-          {step === 3 && (
             <Card className="text-center">
               <CardHeader>
                 <div className="flex justify-center mb-4">
@@ -176,7 +120,7 @@ export default function OnboardingPage() {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-center gap-4">
-                <Button variant="outline" onClick={() => setStep(2)}>
+                <Button variant="outline" onClick={() => setStep(1)}>
                   Back
                 </Button>
                 <Button size="lg" onClick={handleYouTubeConnect}>
@@ -186,8 +130,8 @@ export default function OnboardingPage() {
             </Card>
           )}
 
-          {/* Step 4: Choose Plan */}
-          {step === 4 && (
+          {/* Step 3: Choose Plan */}
+          {step === 3 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-3xl font-bold mb-2">Choose Your Plan</h2>

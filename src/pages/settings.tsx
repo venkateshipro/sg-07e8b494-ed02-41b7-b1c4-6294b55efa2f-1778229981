@@ -13,11 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { PlatformBadge } from "@/components/PlatformBadge";
-import { 
-  User, Mail, Bell, Trash2, Youtube, Instagram,
-  MessageSquare, Linkedin, Facebook
-} from "lucide-react";
+import { Trash2, Youtube } from "lucide-react";
 import { SEO } from "@/components/SEO";
 
 interface UserProfile {
@@ -40,7 +36,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [platforms, setPlatforms] = useState<ConnectedPlatform[]>([]);
+  const [youtubeConnection, setYoutubeConnection] = useState<ConnectedPlatform | null>(null);
   
   // Profile form
   const [name, setName] = useState("");
@@ -73,13 +69,15 @@ export default function Settings() {
       setName(userData.name || "");
       setEmail(userData.email || "");
 
-      // Fetch connected platforms
-      const { data: platformsData } = await supabase
+      // Fetch YouTube connection
+      const { data: platformData } = await supabase
         .from("connected_platforms")
         .select("*")
-        .eq("user_id", session.user.id);
+        .eq("user_id", session.user.id)
+        .eq("platform", "youtube")
+        .maybeSingle();
 
-      setPlatforms(platformsData || []);
+      setYoutubeConnection(platformData);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -158,15 +156,6 @@ export default function Settings() {
     }
   }
 
-  const platformIcons: Record<string, any> = {
-    youtube: Youtube,
-    instagram: Instagram,
-    tiktok: MessageSquare,
-    x: MessageSquare,
-    linkedin: Linkedin,
-    facebook: Facebook,
-  };
-
   if (loading) {
     return (
       <DashboardLayout>
@@ -182,7 +171,7 @@ export default function Settings() {
       <ErrorBoundary>
         <SEO 
           title="Settings - FaGrow"
-          description="Manage your account settings, connected platforms, and preferences"
+          description="Manage your account settings and preferences"
           url="/settings"
         />
         
@@ -198,7 +187,7 @@ export default function Settings() {
             <Tabs defaultValue="profile" className="space-y-6">
               <TabsList>
                 <TabsTrigger value="profile">Profile</TabsTrigger>
-                <TabsTrigger value="platforms">Connected Platforms</TabsTrigger>
+                <TabsTrigger value="account">Connected Account</TabsTrigger>
                 <TabsTrigger value="notifications">Notifications</TabsTrigger>
                 <TabsTrigger value="danger">Danger Zone</TabsTrigger>
               </TabsList>
@@ -264,55 +253,45 @@ export default function Settings() {
                 </Card>
               </TabsContent>
 
-              {/* Platforms Tab */}
-              <TabsContent value="platforms" className="space-y-6">
+              {/* Connected Account Tab */}
+              <TabsContent value="account" className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Connected Platforms</CardTitle>
+                    <CardTitle>Connected Account</CardTitle>
                     <CardDescription>
-                      Manage your connected social media platforms
+                      Manage your connected YouTube channel
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    {platforms.length === 0 ? (
+                  <CardContent>
+                    {!youtubeConnection ? (
                       <div className="text-center py-8 text-muted-foreground">
-                        <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                        <p>No platforms connected yet</p>
+                        <Youtube className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                        <p>No YouTube channel connected yet</p>
                         <Button className="mt-4" onClick={() => window.location.href = "/onboarding"}>
-                          Connect Platform
+                          Connect YouTube
                         </Button>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {platforms.map((platform) => {
-                          const Icon = platformIcons[platform.platform.toLowerCase()] || MessageSquare;
-                          return (
-                            <div
-                              key={platform.id}
-                              className="flex items-center justify-between p-4 border rounded-lg"
-                            >
-                              <div className="flex items-center gap-4">
-                                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                  <Icon className="h-5 w-5 text-primary" />
-                                </div>
-                                <div>
-                                  <h4 className="font-semibold capitalize">{platform.platform}</h4>
-                                  {platform.channel_name && (
-                                    <p className="text-sm text-muted-foreground">
-                                      {platform.channel_name}
-                                    </p>
-                                  )}
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    Connected {new Date(platform.connected_at).toLocaleDateString()}
-                                  </p>
-                                </div>
-                              </div>
-                              <Button variant="outline" size="sm">
-                                Disconnect
-                              </Button>
-                            </div>
-                          );
-                        })}
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center">
+                            <Youtube className="h-5 w-5 text-red-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold">YouTube</h4>
+                            {youtubeConnection.channel_name && (
+                              <p className="text-sm text-muted-foreground">
+                                {youtubeConnection.channel_name}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Connected {new Date(youtubeConnection.connected_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          Disconnect
+                        </Button>
                       </div>
                     )}
                   </CardContent>
