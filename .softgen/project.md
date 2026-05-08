@@ -1,7 +1,7 @@
-# FaGrow - Multi-Platform Social Media SEO & Growth SaaS
+# FaGrow - YouTube SEO & Growth SaaS
 
 ## Vision
-A scalable social media growth platform starting with YouTube, designed to expand to Instagram, TikTok, X, LinkedIn, and Facebook without codebase restructuring.
+A focused YouTube SEO and growth platform designed to help creators optimize their content, discover keywords, and analyze competitors with AI-powered insights.
 
 ## Design
 - **Primary:** `--primary: 262 83% 58%` (deep purple #7C3AED)
@@ -14,7 +14,7 @@ A scalable social media growth platform starting with YouTube, designed to expan
 - Style: Linear's precision + Stripe's polish — dark mode default, generous whitespace, clean data visualizations
 
 ## Features
-- Multi-platform architecture (YouTube live, others coming soon)
+- YouTube-only platform (focused approach)
 - YouTube OAuth integration + Data API v3
 - AI-powered SEO optimization (OpenAI/Anthropic configurable)
 - Keyword explorer with competition analysis
