@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -8,18 +8,55 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { user, loading } = useAuth();
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
+    checkAuth();
+  }, [requireAdmin, router.pathname]);
+
+  async function checkAuth() {
+    try {
+      // Get current session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        // No session - redirect to login
         router.push("/login");
-      } else if (requireAdmin && user.role !== "admin") {
-        router.push("/dashboard");
+        return;
       }
+
+      // Fetch user role from Supabase users table
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", session.user.id)
+        .single();
+
+      if (userError) {
+        console.error("Error fetching user role:", userError);
+        router.push("/login");
+        return;
+      }
+
+      const userRole = userData?.role || "user";
+
+      // Check if admin access is required
+      if (requireAdmin && userRole !== "admin") {
+        // User is not admin but trying to access admin route - redirect to dashboard
+        router.push("/dashboard");
+        return;
+      }
+
+      // User is authorized
+      setAuthorized(true);
+      setLoading(false);
+    } catch (error) {
+      console.error("Auth check error:", error);
+      router.push("/login");
     }
-  }, [user, loading, requireAdmin, router]);
+  }
 
   if (loading) {
     return (
@@ -32,7 +69,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     );
   }
 
-  if (!user || (requireAdmin && user.role !== "admin")) {
+  if (!authorized) {
     return null;
   }
 

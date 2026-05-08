@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, Chrome } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { authService } from "@/services/authService";
+import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
 
 export default function Signup() {
@@ -23,9 +23,22 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      const { error } = await authService.signUp(email, password, name);
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            full_name: name,
+          }
+        }
+      });
       
-      if (error) throw new Error(error.message);
+      if (authError) throw authError;
+
+      if (!authData.user) {
+        throw new Error("No user returned from sign up");
+      }
       
       toast({
         title: "Account created!",
@@ -47,9 +60,14 @@ export default function Signup() {
   const handleGoogleSignup = async () => {
     setLoading(true);
     try {
-      const { error } = await authService.signInWithGoogle();
-      if (error) throw new Error(error.message);
-      // After Google auth, redirect to onboarding handled by callback
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      
+      if (error) throw error;
     } catch (error: any) {
       toast({
         title: "Signup failed",

@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, Chrome } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { authService } from "@/services/authService";
+import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
 
 export default function Login() {
@@ -22,16 +22,45 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const { error } = await authService.signIn(email, password);
+      // Sign in with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
-      if (error) throw new Error(error.message);
+      if (authError) throw authError;
+
+      if (!authData.user) {
+        throw new Error("No user returned from sign in");
+      }
+
+      // Fetch user role from database
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", authData.user.id)
+        .single();
+
+      if (userError) {
+        console.error("Error fetching user role:", userError);
+        // Default to dashboard if we can't fetch role
+        router.push("/dashboard");
+        return;
+      }
+
+      const userRole = userData?.role || "user";
       
       toast({
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
 
-      router.push("/dashboard");
+      // Redirect based on role
+      if (userRole === "admin") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (error: any) {
       toast({
         title: "Login failed",
@@ -46,8 +75,14 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      const { error } = await authService.signInWithGoogle();
-      if (error) throw new Error(error.message);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      
+      if (error) throw error;
     } catch (error: any) {
       toast({
         title: "Login failed",
@@ -136,9 +171,6 @@ export default function Login() {
                 Sign up
               </Link>
             </div>
-            <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-              Forgot password?
-            </Link>
           </CardFooter>
         </Card>
       </div>
