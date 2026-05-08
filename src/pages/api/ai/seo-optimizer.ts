@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/integrations/supabase/client";
+import Anthropic from "@anthropic-ai/sdk";
 
 export default async function handler(
   req: NextApiRequest,
@@ -156,7 +157,6 @@ Format your response as JSON:
 }
 
 async function optimizeSEOAnthropic(title: string, description: string, model: string, apiKey: string) {
-  const Anthropic = require("@anthropic-ai/sdk");
   const anthropic = new Anthropic({ apiKey });
 
   const response = await anthropic.messages.create({

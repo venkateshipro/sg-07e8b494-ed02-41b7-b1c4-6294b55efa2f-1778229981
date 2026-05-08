@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/integrations/supabase/client";
+import Anthropic from "@anthropic-ai/sdk";
 
 export default async function handler(
   req: NextApiRequest,
@@ -136,7 +137,6 @@ async function generateKeywordSuggestionsOpenAI(keyword: string, model: string, 
 }
 
 async function generateKeywordSuggestionsAnthropic(keyword: string, model: string, apiKey: string): Promise<string[]> {
-  const Anthropic = require("@anthropic-ai/sdk");
   const anthropic = new Anthropic({ apiKey });
 
   const response = await anthropic.messages.create({
