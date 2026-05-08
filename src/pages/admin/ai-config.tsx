@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -16,17 +17,19 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Sparkles, CheckCircle2, XCircle, Loader2, Info } from "lucide-react";
 import { SEO } from "@/components/SEO";
 
 interface AIConfig {
   id: string;
-  active_provider: "openai" | "anthropic";
+  ai_enabled: boolean;
+  active_provider: "openai" | "anthropic" | "deepseek";
   active_model: string;
   fallback_enabled: boolean;
-  fallback_provider: "openai" | "anthropic" | null;
+  fallback_provider: "openai" | "anthropic" | "deepseek" | null;
   openai_key_encrypted: string | null;
   anthropic_key_encrypted: string | null;
+  deepseek_key_encrypted: string | null;
 }
 
 const MODEL_OPTIONS = {
@@ -40,6 +43,10 @@ const MODEL_OPTIONS = {
     { value: "claude-haiku", label: "Claude Haiku" },
     { value: "claude-opus", label: "Claude Opus" },
   ],
+  deepseek: [
+    { value: "deepseek-chat", label: "DeepSeek Chat" },
+    { value: "deepseek-reasoner", label: "DeepSeek Reasoner" },
+  ],
 };
 
 export default function AIConfiguration() {
@@ -48,17 +55,21 @@ export default function AIConfiguration() {
   const [saving, setSaving] = useState(false);
   const [testingOpenAI, setTestingOpenAI] = useState(false);
   const [testingAnthropic, setTestingAnthropic] = useState(false);
+  const [testingDeepSeek, setTestingDeepSeek] = useState(false);
 
   const [config, setConfig] = useState<AIConfig | null>(null);
-  const [activeProvider, setActiveProvider] = useState<"openai" | "anthropic">("openai");
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [activeProvider, setActiveProvider] = useState<"openai" | "anthropic" | "deepseek">("openai");
   const [activeModel, setActiveModel] = useState("gpt-4o-mini");
   const [fallbackEnabled, setFallbackEnabled] = useState(false);
-  const [fallbackProvider, setFallbackProvider] = useState<"openai" | "anthropic" | null>(null);
+  const [fallbackProvider, setFallbackProvider] = useState<"openai" | "anthropic" | "deepseek" | null>(null);
   const [openaiKey, setOpenaiKey] = useState("");
   const [anthropicKey, setAnthropicKey] = useState("");
+  const [deepseekKey, setDeepseekKey] = useState("");
 
   const [openaiTestResult, setOpenaiTestResult] = useState<"success" | "error" | null>(null);
   const [anthropicTestResult, setAnthropicTestResult] = useState<"success" | "error" | null>(null);
+  const [deepseekTestResult, setDeepseekTestResult] = useState<"success" | "error" | null>(null);
 
   useEffect(() => {
     fetchConfig();
@@ -75,13 +86,15 @@ export default function AIConfiguration() {
 
       if (data) {
         setConfig(data as AIConfig);
-        setActiveProvider(data.active_provider as "openai" | "anthropic");
+        setAiEnabled(data.ai_enabled ?? true);
+        setActiveProvider(data.active_provider as "openai" | "anthropic" | "deepseek");
         setActiveModel(data.active_model);
         setFallbackEnabled(data.fallback_enabled);
-        setFallbackProvider(data.fallback_provider as "openai" | "anthropic" | null);
+        setFallbackProvider(data.fallback_provider as "openai" | "anthropic" | "deepseek" | null);
         // Don't show encrypted keys in plaintext - just indicate they exist
         setOpenaiKey(data.openai_key_encrypted ? "••••••••••••••••" : "");
         setAnthropicKey(data.anthropic_key_encrypted ? "••••••••••••••••" : "");
+        setDeepseekKey(data.deepseek_key_encrypted ? "••••••••••••••••" : "");
       }
 
       setLoading(false);
@@ -96,10 +109,53 @@ export default function AIConfiguration() {
     }
   }
 
+  async function handleToggleAI(enabled: boolean) {
+    setAiEnabled(enabled);
+    
+    try {
+      const updateData: any = {
+        ai_enabled: enabled,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (config) {
+        const { error } = await supabase
+          .from("ai_config")
+          .update(updateData)
+          .eq("id", config.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("ai_config")
+          .insert([{ ...updateData, active_provider: "openai", active_model: "gpt-4o-mini" }]);
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: enabled ? "AI Features Enabled" : "AI Features Disabled",
+        description: enabled 
+          ? "AI features are now available to all users." 
+          : "AI features are now disabled platform-wide.",
+      });
+
+      fetchConfig();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to toggle AI features",
+        variant: "destructive",
+      });
+      setAiEnabled(!enabled); // Revert on error
+    }
+  }
+
   async function handleSave() {
     setSaving(true);
     try {
       const updateData: any = {
+        ai_enabled: aiEnabled,
         active_provider: activeProvider,
         active_model: activeModel,
         fallback_enabled: fallbackEnabled,
@@ -113,6 +169,9 @@ export default function AIConfiguration() {
       }
       if (anthropicKey && anthropicKey !== "••••••••••••••••") {
         updateData.anthropic_key_encrypted = anthropicKey; // In production, encrypt this
+      }
+      if (deepseekKey && deepseekKey !== "••••••••••••••••") {
+        updateData.deepseek_key_encrypted = deepseekKey; // In production, encrypt this
       }
 
       if (config) {
@@ -149,13 +208,13 @@ export default function AIConfiguration() {
     }
   }
 
-  async function testConnection(provider: "openai" | "anthropic") {
-    const apiKey = provider === "openai" ? openaiKey : anthropicKey;
+  async function testConnection(provider: "openai" | "anthropic" | "deepseek") {
+    const apiKey = provider === "openai" ? openaiKey : provider === "anthropic" ? anthropicKey : deepseekKey;
     
     if (!apiKey || apiKey === "••••••••••••••••") {
       toast({
         title: "API Key required",
-        description: `Please enter a valid ${provider === "openai" ? "OpenAI" : "Anthropic"} API key first.`,
+        description: `Please enter a valid ${provider === "openai" ? "OpenAI" : provider === "anthropic" ? "Anthropic" : "DeepSeek"} API key first.`,
         variant: "destructive",
       });
       return;
@@ -164,9 +223,12 @@ export default function AIConfiguration() {
     if (provider === "openai") {
       setTestingOpenAI(true);
       setOpenaiTestResult(null);
-    } else {
+    } else if (provider === "anthropic") {
       setTestingAnthropic(true);
       setAnthropicTestResult(null);
+    } else {
+      setTestingDeepSeek(true);
+      setDeepseekTestResult(null);
     }
 
     try {
@@ -182,12 +244,14 @@ export default function AIConfiguration() {
       if (response.ok && result.success) {
         if (provider === "openai") {
           setOpenaiTestResult("success");
-        } else {
+        } else if (provider === "anthropic") {
           setAnthropicTestResult("success");
+        } else {
+          setDeepseekTestResult("success");
         }
         toast({
           title: "Connection successful",
-          description: `Successfully connected to ${provider === "openai" ? "OpenAI" : "Anthropic Claude"}`,
+          description: `Successfully connected to ${provider === "openai" ? "OpenAI" : provider === "anthropic" ? "Anthropic Claude" : "DeepSeek"}`,
         });
       } else {
         throw new Error(result.error || "Connection failed");
@@ -195,25 +259,33 @@ export default function AIConfiguration() {
     } catch (error: any) {
       if (provider === "openai") {
         setOpenaiTestResult("error");
-      } else {
+      } else if (provider === "anthropic") {
         setAnthropicTestResult("error");
+      } else {
+        setDeepseekTestResult("error");
       }
       toast({
         title: "Connection failed",
-        description: error.message || `Could not connect to ${provider === "openai" ? "OpenAI" : "Anthropic"}`,
+        description: error.message || `Could not connect to ${provider === "openai" ? "OpenAI" : provider === "anthropic" ? "Anthropic" : "DeepSeek"}`,
         variant: "destructive",
       });
     } finally {
       if (provider === "openai") {
         setTestingOpenAI(false);
-      } else {
+      } else if (provider === "anthropic") {
         setTestingAnthropic(false);
+      } else {
+        setTestingDeepSeek(false);
       }
     }
   }
 
   const availableModels = MODEL_OPTIONS[activeProvider];
-  const fallbackOptions = activeProvider === "openai" ? "anthropic" : "openai";
+  const fallbackOptions = activeProvider === "openai" 
+    ? ["anthropic", "deepseek"] 
+    : activeProvider === "anthropic" 
+    ? ["openai", "deepseek"]
+    : ["openai", "anthropic"];
 
   if (loading) {
     return (
@@ -246,6 +318,48 @@ export default function AIConfiguration() {
               </p>
             </div>
 
+            {/* Master AI Toggle */}
+            <Card className="border-2 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  AI Features Enabled
+                </CardTitle>
+                <CardDescription>
+                  Master switch to enable or disable all AI features platform-wide
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="ai-enabled" className="text-base font-semibold">
+                      {aiEnabled ? "AI Features Active" : "AI Features Disabled"}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {aiEnabled 
+                        ? "All users can access AI-powered SEO optimization, keyword research, and competitor analysis." 
+                        : "AI features are currently unavailable to all users. They will see a maintenance message."}
+                    </p>
+                  </div>
+                  <Switch
+                    id="ai-enabled"
+                    checked={aiEnabled}
+                    onCheckedChange={handleToggleAI}
+                    className="data-[state=checked]:bg-accent"
+                  />
+                </div>
+
+                {!aiEnabled && (
+                  <Alert className="mt-4">
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      Users will see: "AI features are temporarily unavailable. Please check back soon."
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Provider Selection */}
             <Card>
               <CardHeader>
@@ -258,7 +372,7 @@ export default function AIConfiguration() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="active-provider">AI Provider</Label>
-                    <Select value={activeProvider} onValueChange={(value: "openai" | "anthropic") => {
+                    <Select value={activeProvider} onValueChange={(value: "openai" | "anthropic" | "deepseek") => {
                       setActiveProvider(value);
                       // Reset model to first option of new provider
                       setActiveModel(MODEL_OPTIONS[value][0].value);
@@ -269,6 +383,7 @@ export default function AIConfiguration() {
                       <SelectContent>
                         <SelectItem value="openai">OpenAI</SelectItem>
                         <SelectItem value="anthropic">Anthropic Claude</SelectItem>
+                        <SelectItem value="deepseek">DeepSeek</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -376,6 +491,44 @@ export default function AIConfiguration() {
                     )}
                   </div>
                 </div>
+
+                {/* DeepSeek Key */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="deepseek-key">DeepSeek API Key</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="deepseek-key"
+                        type="password"
+                        placeholder="sk-..."
+                        value={deepseekKey}
+                        onChange={(e) => setDeepseekKey(e.target.value)}
+                        className="font-mono"
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={() => testConnection("deepseek")}
+                        disabled={testingDeepSeek || !deepseekKey}
+                      >
+                        {testingDeepSeek ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : deepseekTestResult === "success" ? (
+                          <CheckCircle2 className="h-4 w-4 text-accent" />
+                        ) : deepseekTestResult === "error" ? (
+                          <XCircle className="h-4 w-4 text-destructive" />
+                        ) : (
+                          "Test"
+                        )}
+                      </Button>
+                    </div>
+                    {deepseekTestResult === "success" && (
+                      <p className="text-sm text-accent">✓ Connection successful</p>
+                    )}
+                    {deepseekTestResult === "error" && (
+                      <p className="text-sm text-destructive">✗ Connection failed</p>
+                    )}
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -401,7 +554,7 @@ export default function AIConfiguration() {
                     onCheckedChange={(checked) => {
                       setFallbackEnabled(checked);
                       if (checked && !fallbackProvider) {
-                        setFallbackProvider(fallbackOptions);
+                        setFallbackProvider(fallbackOptions[0] as "openai" | "anthropic" | "deepseek");
                       }
                     }}
                   />
@@ -411,20 +564,22 @@ export default function AIConfiguration() {
                   <div className="space-y-2 pt-4 border-t">
                     <Label htmlFor="fallback-provider">Fallback Provider</Label>
                     <Select 
-                      value={fallbackProvider || fallbackOptions} 
-                      onValueChange={(value: "openai" | "anthropic") => setFallbackProvider(value)}
+                      value={fallbackProvider || fallbackOptions[0]} 
+                      onValueChange={(value: "openai" | "anthropic" | "deepseek") => setFallbackProvider(value)}
                     >
                       <SelectTrigger id="fallback-provider">
                         <SelectValue placeholder="Select fallback provider" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={fallbackOptions}>
-                          {fallbackOptions === "openai" ? "OpenAI" : "Anthropic Claude"}
-                        </SelectItem>
+                        {fallbackOptions.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option === "openai" ? "OpenAI" : option === "anthropic" ? "Anthropic Claude" : "DeepSeek"}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <p className="text-sm text-muted-foreground">
-                      Will use {fallbackOptions === "openai" ? "OpenAI" : "Anthropic"} if {activeProvider === "openai" ? "OpenAI" : "Anthropic"} fails
+                      Will use {fallbackProvider === "openai" ? "OpenAI" : fallbackProvider === "anthropic" ? "Anthropic" : "DeepSeek"} if {activeProvider === "openai" ? "OpenAI" : activeProvider === "anthropic" ? "Anthropic" : "DeepSeek"} fails
                     </p>
                   </div>
                 )}

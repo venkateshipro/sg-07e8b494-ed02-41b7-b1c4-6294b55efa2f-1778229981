@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import Anthropic from "@anthropic-ai/sdk";
 
 export default async function handler(
   req: NextApiRequest,
@@ -37,16 +38,32 @@ export default async function handler(
 
       return res.status(200).json({ success: true, provider: "openai" });
     } else if (provider === "anthropic") {
-      // Test Anthropic connection
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      // Test Anthropic connection using official SDK
+      const anthropic = new Anthropic({
+        apiKey: apiKey,
+      });
+
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 100,
+        messages: [{ role: "user", content: "Say hello" }],
+      });
+
+      if (!response || !response.id) {
+        throw new Error("Anthropic API request failed");
+      }
+
+      return res.status(200).json({ success: true, provider: "anthropic" });
+    } else if (provider === "deepseek") {
+      // Test DeepSeek connection (OpenAI-compatible)
+      const response = await fetch("https://api.deepseek.com/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
+          "Authorization": `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "claude-haiku-20240307",
+          model: "deepseek-chat",
           messages: [{ role: "user", content: "Test" }],
           max_tokens: 5,
         }),
@@ -54,10 +71,10 @@ export default async function handler(
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error?.message || "Anthropic API request failed");
+        throw new Error(error.error?.message || "DeepSeek API request failed");
       }
 
-      return res.status(200).json({ success: true, provider: "anthropic" });
+      return res.status(200).json({ success: true, provider: "deepseek" });
     } else {
       return res.status(400).json({ error: "Invalid provider" });
     }
