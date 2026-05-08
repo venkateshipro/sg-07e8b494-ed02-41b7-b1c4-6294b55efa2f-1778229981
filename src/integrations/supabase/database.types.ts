@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -19,7 +19,9 @@ export type Database = {
         Row: {
           active_model: string
           active_provider: string
+          ai_enabled: boolean | null
           anthropic_key_encrypted: string | null
+          deepseek_key_encrypted: string | null
           fallback_enabled: boolean | null
           fallback_provider: string | null
           id: string
@@ -29,7 +31,9 @@ export type Database = {
         Insert: {
           active_model?: string
           active_provider?: string
+          ai_enabled?: boolean | null
           anthropic_key_encrypted?: string | null
+          deepseek_key_encrypted?: string | null
           fallback_enabled?: boolean | null
           fallback_provider?: string | null
           id?: string
@@ -39,7 +43,9 @@ export type Database = {
         Update: {
           active_model?: string
           active_provider?: string
+          ai_enabled?: boolean | null
           anthropic_key_encrypted?: string | null
+          deepseek_key_encrypted?: string | null
           fallback_enabled?: boolean | null
           fallback_provider?: string | null
           id?: string
