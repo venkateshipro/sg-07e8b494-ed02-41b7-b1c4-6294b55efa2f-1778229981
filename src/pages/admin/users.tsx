@@ -1,15 +1,34 @@
 import { useEffect, useState } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { ErrorBoundary, ErrorFallback } from "@/components/ErrorBoundary";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,12 +39,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Filter, Eye, Trash2, UserCog } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { adminService } from "@/services/adminService";
-import { SEO } from "@/components/SEO";
-import { useRouter } from "next/router";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Search, Filter, Users as UsersIcon, Trash2, Ban, CheckCircle2, Youtube, Calendar } from "lucide-react";
+import { SEO } from "@/components/SEO";
+import { format } from "date-fns";
 
 interface User {
   id: string;
@@ -34,361 +53,555 @@ interface User {
   plan: string;
   created_at: string;
   last_login: string | null;
+  status: string;
+  avatar_url?: string;
 }
 
-interface UserDetails {
-  user: any;
-  subscription: any;
-  platforms: any[];
-  usage: any[];
+interface UserDetail extends User {
+  usage?: Array<{
+    date: string;
+    keyword_searches: number;
+    seo_optimizations: number;
+    competitor_analyses: number;
+  }>;
+  platforms?: Array<{
+    platform: string;
+    channel_name?: string;
+    connected_at: string;
+  }>;
+  subscription?: {
+    status: string;
+    current_period_end: string | null;
+  };
 }
 
-export default function AdminUsersPage() {
-  const { user: currentUser } = useAuth();
-  const router = useRouter();
+export default function AdminUsers() {
   const { toast } = useToast();
-  
-  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   
-  // User details panel
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
-  const [detailsLoading, setDetailsLoading] = useState(false);
-  const [panelOpen, setPanelOpen] = useState(false);
+  // User detail panel
+  const [selectedUser, setSelectedUser] = useState<UserDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   
-  // Delete confirmation
-  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  // Actions
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      if (!currentUser) {
-        router.push("/login");
-        return;
-      }
-
-      const isAdmin = await adminService.isAdmin(currentUser.id);
-      if (!isAdmin) {
-        toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: "You don't have permission to access this page.",
-        });
-        router.push("/dashboard");
-        return;
-      }
-
-      const filters: any = {};
-      if (searchQuery) filters.search = searchQuery;
-      if (planFilter !== "all") filters.plan = planFilter;
-      if (dateFrom) filters.dateFrom = dateFrom;
-      if (dateTo) filters.dateTo = dateTo;
-
-      const usersData = await adminService.getUsers(filters);
-      setUsers(usersData);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error loading users:", err);
-      setError(err instanceof Error ? err : new Error("Failed to load users"));
-      toast({
-        variant: "destructive",
-        title: "Failed to Load Users",
-        description: "Could not load user data. Please try again.",
-      });
-      setLoading(false);
-    }
-  };
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, [currentUser]);
+    fetchUsers();
+  }, []);
 
-  const handleFilter = () => {
-    loadData();
-  };
+  useEffect(() => {
+    applyFilters();
+  }, [searchQuery, planFilter, statusFilter, users]);
 
-  const handleViewDetails = async (userId: string) => {
-    setSelectedUserId(userId);
-    setPanelOpen(true);
-    setDetailsLoading(true);
-
+  async function fetchUsers() {
     try {
-      const details = await adminService.getUserDetails(userId);
-      setUserDetails(details);
-      setDetailsLoading(false);
-    } catch (err) {
-      console.error("Error loading user details:", err);
-      toast({
-        variant: "destructive",
-        title: "Failed to Load User Details",
-        description: "Could not load user information.",
-      });
-      setDetailsLoading(false);
-    }
-  };
+      const { data, error } = await supabase
+        .from("users")
+        .select("id, name, email, plan, created_at, last_login, status, avatar_url")
+        .order("created_at", { ascending: false });
 
-  const handleChangePlan = async (userId: string, newPlan: string) => {
-    try {
-      await adminService.updateUserPlan(userId, newPlan);
+      if (error) throw error;
+
+      setUsers(data || []);
+      setFilteredUsers(data || []);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching users:", error);
       toast({
-        title: "Plan Updated",
-        description: "User plan has been successfully updated.",
-      });
-      loadData();
-      if (selectedUserId === userId) {
-        const details = await adminService.getUserDetails(userId);
-        setUserDetails(details);
-      }
-    } catch (err) {
-      toast({
+        title: "Error",
+        description: "Failed to load users",
         variant: "destructive",
-        title: "Failed to Update Plan",
-        description: "Could not update user plan. Please try again.",
       });
     }
-  };
+  }
 
-  const handleDeleteUser = async () => {
-    if (!deleteUserId) return;
+  function applyFilters() {
+    let filtered = [...users];
 
-    setDeleting(true);
+    // Search filter
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (user) =>
+          user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Plan filter
+    if (planFilter !== "all") {
+      filtered = filtered.filter((user) => user.plan === planFilter);
+    }
+
+    // Status filter
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((user) => user.status === statusFilter);
+    }
+
+    setFilteredUsers(filtered);
+  }
+
+  async function openUserDetail(user: User) {
+    setSelectedUser(user as UserDetail);
+    setSheetOpen(true);
+    setDetailLoading(true);
+
     try {
-      await adminService.deleteUser(deleteUserId);
-      toast({
-        title: "User Deleted",
-        description: "User has been permanently deleted.",
+      // Fetch usage stats
+      const { data: usage } = await supabase
+        .from("usage_tracking")
+        .select("date, keyword_searches, seo_optimizations, competitor_analyses")
+        .eq("user_id", user.id)
+        .order("date", { ascending: false })
+        .limit(30);
+
+      // Fetch connected platforms
+      const { data: platforms } = await supabase
+        .from("connected_platforms")
+        .select("platform, channel_name, connected_at")
+        .eq("user_id", user.id);
+
+      // Fetch subscription
+      const { data: subscription } = await supabase
+        .from("subscriptions")
+        .select("status, current_period_end")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      setSelectedUser({
+        ...user,
+        usage: usage || [],
+        platforms: platforms || [],
+        subscription: subscription || undefined,
       });
-      setDeleteDialogOpen(false);
-      setDeleteUserId(null);
-      setPanelOpen(false);
-      loadData();
-    } catch (err) {
+    } catch (error) {
+      console.error("Error fetching user details:", error);
       toast({
+        title: "Error",
+        description: "Failed to load user details",
         variant: "destructive",
-        title: "Failed to Delete User",
-        description: "Could not delete user. Please try again.",
       });
     } finally {
-      setDeleting(false);
+      setDetailLoading(false);
     }
-  };
+  }
+
+  async function handleChangePlan(userId: string, newPlan: string) {
+    setActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ plan: newPlan })
+        .eq("id", userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Plan updated",
+        description: "User plan has been changed successfully.",
+      });
+
+      fetchUsers();
+      if (selectedUser) {
+        setSelectedUser({ ...selectedUser, plan: newPlan });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update plan",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleToggleStatus(userId: string, currentStatus: string) {
+    setActionLoading(true);
+    const newStatus = currentStatus === "active" ? "suspended" : "active";
+    
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ status: newStatus })
+        .eq("id", userId);
+
+      if (error) throw error;
+
+      toast({
+        title: newStatus === "active" ? "User reactivated" : "User suspended",
+        description: `User has been ${newStatus === "active" ? "reactivated" : "suspended"} successfully.`,
+      });
+
+      fetchUsers();
+      if (selectedUser) {
+        setSelectedUser({ ...selectedUser, status: newStatus });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update status",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleDeleteUser() {
+    if (!userToDelete) return;
+    
+    setActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from("users")
+        .delete()
+        .eq("id", userToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "User deleted",
+        description: "User account has been permanently deleted.",
+      });
+
+      fetchUsers();
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+      setSheetOpen(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  function getStatusBadgeVariant(status: string) {
+    if (status === "active") return "default";
+    if (status === "suspended") return "destructive";
+    return "secondary";
+  }
+
+  function getPlanBadgeVariant(plan: string) {
+    if (plan === "enterprise") return "default";
+    if (plan === "pro") return "secondary";
+    return "outline";
+  }
+
+  const totalUsers = users.length;
+  const activeUsers = users.filter((u) => u.status === "active").length;
+  const suspendedUsers = users.filter((u) => u.status === "suspended").length;
 
   return (
-    <ProtectedRoute>
-      <SEO title="User Management - Admin - FaGrow" />
-      <ErrorBoundary onReset={loadData}>
+    <ProtectedRoute requireAdmin>
+      <ErrorBoundary>
+        <SEO 
+          title="User Management - Admin - FaGrow"
+          description="Manage all users, view usage stats, and control access"
+          url="/admin/users"
+        />
+        
         <AdminLayout>
           <div className="space-y-6">
+            {/* Header */}
             <div>
-              <h1 className="text-3xl font-bold mb-2">User Management</h1>
-              <p className="text-muted-foreground">Manage all users and their subscriptions</p>
+              <h1 className="text-3xl font-bold">User Management</h1>
+              <p className="text-muted-foreground mt-2">
+                Manage all users, view usage stats, and control access
+              </p>
             </div>
 
-            {error && (
-              <ErrorFallback
-                error={error}
-                title="Failed to Load Users"
-                description="We couldn't load the user data. Please try again."
-                onRetry={loadData}
-              />
-            )}
-
-            {!error && (
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card>
-                <CardHeader>
-                  <CardTitle>All Users</CardTitle>
-                  <CardDescription>Search and filter users by name, email, plan, or date</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                  <UsersIcon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  {/* Filters */}
-                  <div className="flex flex-col lg:flex-row gap-4 mb-6">
-                    <div className="flex-1">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Search by name or email..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && handleFilter()}
-                          className="pl-9"
-                        />
-                      </div>
+                  <div className="text-2xl font-bold">{totalUsers}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+                  <CheckCircle2 className="h-4 w-4 text-accent" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{activeUsers}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Suspended Users</CardTitle>
+                  <Ban className="h-4 w-4 text-destructive" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{suspendedUsers}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Filters */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Search & Filter</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="search">Search by name or email</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="search"
+                        placeholder="Search users..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                      />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="plan-filter">Filter by plan</Label>
                     <Select value={planFilter} onValueChange={setPlanFilter}>
-                      <SelectTrigger className="w-full lg:w-48">
-                        <SelectValue placeholder="Filter by plan" />
+                      <SelectTrigger id="plan-filter">
+                        <SelectValue placeholder="All plans" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Plans</SelectItem>
+                        <SelectItem value="all">All plans</SelectItem>
                         <SelectItem value="free">Free</SelectItem>
                         <SelectItem value="starter">Starter</SelectItem>
                         <SelectItem value="pro">Pro</SelectItem>
                         <SelectItem value="enterprise">Enterprise</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Input
-                      type="date"
-                      placeholder="From date"
-                      value={dateFrom}
-                      onChange={(e) => setDateFrom(e.target.value)}
-                      className="w-full lg:w-48"
-                    />
-                    <Input
-                      type="date"
-                      placeholder="To date"
-                      value={dateTo}
-                      onChange={(e) => setDateTo(e.target.value)}
-                      className="w-full lg:w-48"
-                    />
-                    <Button onClick={handleFilter} className="w-full lg:w-auto">
-                      <Filter className="h-4 w-4 mr-2" />
-                      Apply Filters
-                    </Button>
                   </div>
 
-                  {/* Users Table */}
-                  {loading ? (
-                    <div className="space-y-3">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <div key={i} className="flex items-center gap-4">
-                          <Skeleton className="h-12 flex-1" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-lg border">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Plan</TableHead>
-                            <TableHead>Joined</TableHead>
-                            <TableHead>Last Login</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                  <div className="space-y-2">
+                    <Label htmlFor="status-filter">Filter by status</Label>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger id="status-filter">
+                        <SelectValue placeholder="All statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All statuses</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="suspended">Suspended</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Users Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>All Users ({filteredUsers.length})</CardTitle>
+                <CardDescription>
+                  Click on any user to view details and manage their account
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : filteredUsers.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <UsersIcon className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                    <p>No users found matching your filters</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>User</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Plan</TableHead>
+                          <TableHead>Joined</TableHead>
+                          <TableHead>Last Active</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredUsers.map((user) => (
+                          <TableRow
+                            key={user.id}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => openUserDetail(user)}
+                          >
+                            <TableCell className="font-medium">{user.name}</TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>
+                              <Badge variant={getPlanBadgeVariant(user.plan)} className="capitalize">
+                                {user.plan}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {format(new Date(user.created_at), "MMM d, yyyy")}
+                            </TableCell>
+                            <TableCell>
+                              {user.last_login
+                                ? format(new Date(user.last_login), "MMM d, yyyy")
+                                : "Never"}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={getStatusBadgeVariant(user.status)} className="capitalize">
+                                {user.status}
+                              </Badge>
+                            </TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {users.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                No users found matching your filters
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            users.map((user) => (
-                              <TableRow key={user.id}>
-                                <TableCell className="font-medium">{user.name}</TableCell>
-                                <TableCell>{user.email}</TableCell>
-                                <TableCell>
-                                  <Badge variant="outline" className="capitalize">
-                                    {user.plan}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  {new Date(user.created_at).toLocaleDateString()}
-                                </TableCell>
-                                <TableCell>
-                                  {user.last_login
-                                    ? new Date(user.last_login).toLocaleDateString()
-                                    : "Never"}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleViewDetails(user.id)}
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
-          {/* User Details Panel */}
-          <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
-            <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>User Details</SheetTitle>
-                <SheetDescription>View and manage user information</SheetDescription>
-              </SheetHeader>
+          {/* User Detail Sheet */}
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+            <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+              {selectedUser && (
+                <>
+                  <SheetHeader>
+                    <SheetTitle>User Details</SheetTitle>
+                    <SheetDescription>
+                      Manage {selectedUser.name}'s account and view their usage statistics
+                    </SheetDescription>
+                  </SheetHeader>
 
-              {detailsLoading ? (
-                <div className="space-y-4 mt-6">
-                  <Skeleton className="h-24" />
-                  <Skeleton className="h-32" />
-                  <Skeleton className="h-32" />
-                </div>
-              ) : userDetails ? (
-                <div className="space-y-6 mt-6">
-                  {/* Basic Info */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Basic Information</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Name:</span>
-                        <span className="font-medium">{userDetails.user.name}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Email:</span>
-                        <span className="font-medium">{userDetails.user.email}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">User ID:</span>
-                        <span className="font-mono text-xs">{userDetails.user.id}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Joined:</span>
-                        <span>{new Date(userDetails.user.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Last Login:</span>
-                        <span>
-                          {userDetails.user.last_login
-                            ? new Date(userDetails.user.last_login).toLocaleDateString()
-                            : "Never"}
-                        </span>
+                  <div className="mt-6 space-y-6">
+                    {/* User Info */}
+                    <div>
+                      <h3 className="text-sm font-medium mb-3">Account Information</h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Name:</span>
+                          <span className="font-medium">{selectedUser.name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Email:</span>
+                          <span className="font-medium">{selectedUser.email}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Current Plan:</span>
+                          <Badge variant={getPlanBadgeVariant(selectedUser.plan)} className="capitalize">
+                            {selectedUser.plan}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Status:</span>
+                          <Badge variant={getStatusBadgeVariant(selectedUser.status)} className="capitalize">
+                            {selectedUser.status}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Joined:</span>
+                          <span>{format(new Date(selectedUser.created_at), "MMM d, yyyy")}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Plan Management */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Plan Management</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Current Plan:</span>
-                        <Badge variant="outline" className="capitalize">
-                          {userDetails.user.plan}
-                        </Badge>
-                      </div>
+                    <Separator />
+
+                    {/* Connected Platforms */}
+                    <div>
+                      <h3 className="text-sm font-medium mb-3">Connected Platforms</h3>
+                      {detailLoading ? (
+                        <div className="flex items-center justify-center py-4">
+                          <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      ) : selectedUser.platforms && selectedUser.platforms.length > 0 ? (
+                        <div className="space-y-2">
+                          {selectedUser.platforms.map((platform, idx) => (
+                            <div key={idx} className="flex items-center gap-3 p-3 border rounded-lg">
+                              <Youtube className="h-5 w-5 text-primary" />
+                              <div className="flex-1">
+                                <p className="text-sm font-medium capitalize">{platform.platform}</p>
+                                {platform.channel_name && (
+                                  <p className="text-xs text-muted-foreground">{platform.channel_name}</p>
+                                )}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {format(new Date(platform.connected_at), "MMM d")}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No platforms connected</p>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    {/* Usage Stats (Last 30 Days) */}
+                    <div>
+                      <h3 className="text-sm font-medium mb-3">Usage (Last 30 Days)</h3>
+                      {detailLoading ? (
+                        <div className="flex items-center justify-center py-4">
+                          <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      ) : selectedUser.usage && selectedUser.usage.length > 0 ? (
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-3 gap-2">
+                            <div className="p-3 border rounded-lg">
+                              <p className="text-xs text-muted-foreground mb-1">Keyword Searches</p>
+                              <p className="text-2xl font-bold">
+                                {selectedUser.usage.reduce((sum, u) => sum + (u.keyword_searches || 0), 0)}
+                              </p>
+                            </div>
+                            <div className="p-3 border rounded-lg">
+                              <p className="text-xs text-muted-foreground mb-1">SEO Optimizations</p>
+                              <p className="text-2xl font-bold">
+                                {selectedUser.usage.reduce((sum, u) => sum + (u.seo_optimizations || 0), 0)}
+                              </p>
+                            </div>
+                            <div className="p-3 border rounded-lg">
+                              <p className="text-xs text-muted-foreground mb-1">Competitor Analyses</p>
+                              <p className="text-2xl font-bold">
+                                {selectedUser.usage.reduce((sum, u) => sum + (u.competitor_analyses || 0), 0)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No usage data available</p>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    {/* Change Plan */}
+                    <div>
+                      <h3 className="text-sm font-medium mb-3">Change Plan</h3>
                       <Select
-                        value={userDetails.user.plan}
-                        onValueChange={(value) => handleChangePlan(userDetails.user.id, value)}
+                        value={selectedUser.plan}
+                        onValueChange={(value) => handleChangePlan(selectedUser.id, value)}
+                        disabled={actionLoading}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Change plan" />
+                          <SelectValue placeholder="Select plan" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="free">Free</SelectItem>
@@ -398,71 +611,48 @@ export default function AdminUsersPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
 
-                  {/* Connected Platforms */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Connected Platforms</h3>
-                    {userDetails.platforms.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No platforms connected</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {userDetails.platforms.map((platform: any) => (
-                          <div
-                            key={platform.id}
-                            className="flex items-center justify-between p-3 border rounded-lg"
-                          >
-                            <span className="capitalize font-medium">{platform.platform}</span>
-                            <Badge variant="secondary">Connected</Badge>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                    <Separator />
 
-                  {/* Recent Usage */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Recent Usage (Last 30 Days)</h3>
-                    {userDetails.usage.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No usage data available</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {userDetails.usage.slice(0, 5).map((usage: any) => (
-                          <div
-                            key={usage.date}
-                            className="flex items-center justify-between text-sm"
-                          >
-                            <span className="text-muted-foreground">
-                              {new Date(usage.date).toLocaleDateString()}
-                            </span>
-                            <div className="flex gap-3 text-xs">
-                              <span>KW: {usage.keyword_searches}</span>
-                              <span>SEO: {usage.seo_optimizations}</span>
-                              <span>CA: {usage.competitor_analysis}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                    {/* Actions */}
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-medium">Account Actions</h3>
+                      
+                      <Button
+                        variant={selectedUser.status === "active" ? "outline" : "default"}
+                        className="w-full"
+                        onClick={() => handleToggleStatus(selectedUser.id, selectedUser.status)}
+                        disabled={actionLoading}
+                      >
+                        {selectedUser.status === "active" ? (
+                          <>
+                            <Ban className="mr-2 h-4 w-4" />
+                            Suspend User
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                            Reactivate User
+                          </>
+                        )}
+                      </Button>
 
-                  {/* Danger Zone */}
-                  <div className="pt-4 border-t">
-                    <h3 className="text-lg font-semibold mb-3 text-destructive">Danger Zone</h3>
-                    <Button
-                      variant="destructive"
-                      className="w-full"
-                      onClick={() => {
-                        setDeleteUserId(userDetails.user.id);
-                        setDeleteDialogOpen(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete User
-                    </Button>
+                      <Button
+                        variant="destructive"
+                        className="w-full"
+                        onClick={() => {
+                          setUserToDelete(selectedUser);
+                          setDeleteDialogOpen(true);
+                        }}
+                        disabled={actionLoading}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Account
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ) : null}
+                </>
+              )}
             </SheetContent>
           </Sheet>
 
@@ -472,18 +662,19 @@ export default function AdminUsersPage() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the user account
-                  and all associated data including subscriptions, usage history, and connected platforms.
+                  This action cannot be undone. This will permanently delete{" "}
+                  <strong>{userToDelete?.name}'s</strong> account and remove all their data
+                  from our servers.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+                <AlertDialogCancel disabled={actionLoading}>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDeleteUser}
-                  disabled={deleting}
-                  className="bg-destructive hover:bg-destructive/90"
+                  disabled={actionLoading}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
-                  {deleting ? "Deleting..." : "Delete User"}
+                  {actionLoading ? "Deleting..." : "Delete Account"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
